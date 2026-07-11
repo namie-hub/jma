@@ -2,7 +2,7 @@
 
 An interactive map of Japan weather for travel planning, drawing live data from
 the Japan Meteorological Agency (気象庁). No backend, no build step, no API key —
-two static files that run from a local `file://` open or any static web host.
+a static, no-build package that runs from a local `file://` open or any static web host.
 
 ![map](preview.png)
 
@@ -29,14 +29,17 @@ two static files that run from a local `file://` open or any static web host.
 
 | File | Purpose |
 |------|---------|
-| `index.html` | The app. (Identical copy: `japan_weather_jma.html`.) |
+| `index.html` | Main Weather Atlas entry point. |
+| `japan_weather_jma.html` | Standalone copy of the Weather Atlas. |
+| `japan_disaster_jma.html` | Disaster Atlas: earthquakes, warnings, volcanoes, tsunami, typhoons and history. |
+| `scripts/check_feeds.js` | Resilient command-line health check with retries and JSON validation. |
 | `jma_cities.js` | The city registry, generated from JMA's own area constants. Loaded via `<script>` tag so the app still works from `file://`. |
 
 Both files must sit in the **same folder**.
 
 ## Running locally
 
-Double-click `index.html`. That's it — it fetches live data directly from JMA
+Double-click `index.html`. Use the Weather / Disaster switch in the header to move between atlases. That's it — it fetches live data directly from JMA
 and Open-Meteo, both of which send permissive CORS headers.
 
 ## Data sources & attribution
@@ -64,3 +67,14 @@ ever expect heavy traffic (they offer a paid tier with higher limits).
 - Snow/gap coverage is shown honestly — an empty layer never implies "no risk".
 - The typhoon feed only carries *active* storms; there is no historical playback
   after a storm dissipates.
+
+
+## Shared modules
+
+| File | Purpose |
+|------|---------|
+| `jma_cities.js` | City/sub-region registry, used by both atlases. |
+| `jma_pressure.js` | Sea-level pressure engine (Open-Meteo JMA model fetch, isobars, 低/高 centres incl. dashed "forming low" badges). Single source of truth for the Weather Atlas Pressure view and the Disaster Atlas Typhoon view — edit it once, both maps change. |
+
+Both pages carry a floating **Weather ⇄ Disaster** switch on the left of the
+map (over the Sea of Japan), replacing the old header links.
