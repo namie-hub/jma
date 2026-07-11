@@ -1402,15 +1402,21 @@ function closePanel(){ document.getElementById("panel").classList.remove("open")
 /* ================= dropdown ================= */
 (function(){
   const sel = document.getElementById("citySel");
-  const gMaj = document.createElement("optgroup"); gMaj.label = "Major hubs";
-  const gAll = document.createElement("optgroup"); gAll.label = "All regions (north → south)";
+  // group by prefecture (JMA office), preserving registry order (north → south)
+  const groups = new Map();
   for (const c of CITIES){
+    const key = c.office;
+    if (!groups.has(key)){
+      const g = document.createElement("optgroup");
+      g.label = c.pref + " " + c.prefJp;
+      groups.set(key, g);
+      sel.appendChild(g);
+    }
     const o = document.createElement("option");
     o.value = c.amedas;
-    o.textContent = c.n + " (" + c.jp + ") — " + c.regionJp;
-    (c.major ? gMaj : gAll).appendChild(o);
+    o.textContent = c.n + " (" + c.jp + ")" + (c.major ? " ★" : "");
+    groups.get(key).appendChild(o);
   }
-  sel.appendChild(gMaj); sel.appendChild(gAll);
   sel.addEventListener("change", function(){
     const c = CITIES.find(x => x.amedas === sel.value);
     if (c){ map.setView([c.lat,c.lon], 8); openPanel(c); }
