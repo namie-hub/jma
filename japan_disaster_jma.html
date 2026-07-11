@@ -193,7 +193,7 @@
   footer{min-height:38px;padding:8px 18px;background:#fff;color:#667585;box-shadow:0 -3px 12px rgba(15,39,64,.04)}
   .leaflet-control-attribution{background:rgba(255,255,255,.84)!important;backdrop-filter:blur(8px)}
   @media(max-width:860px){.liveSummary{display:none}.brandBlock{min-width:auto}.brandSub{display:none}}
-  @media(max-width:640px){.appHeader{min-height:64px;padding:9px 10px;gap:7px;flex-wrap:nowrap}.brandMark{width:36px;height:36px}.appHeader h1{font-size:.96rem}.atlasSwitch{display:none}.primaryBtn{width:40px;padding:0!important;justify-content:center}.primaryBtn span{display:none}#modebar{top:10px;left:10px;right:10px;transform:none;justify-content:flex-start;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;-webkit-mask-image:linear-gradient(90deg,#000 92%,transparent);mask-image:linear-gradient(90deg,#000 92%,transparent)}#modebar::-webkit-scrollbar{display:none}#modebar button{min-width:67px;flex:0 0 auto;padding:7px 8px}#modebar button .me{font-size:.72rem}#modebar button .mj{font-size:.6rem}#panel{inset:0;width:100%;max-width:none;border-radius:0;border:none}#legend{left:8px;right:8px;bottom:8px;max-width:none;max-height:38vh;overflow:auto}footer{display:none}}
+  @media(max-width:640px){.appHeader{min-height:64px;padding:9px 10px;gap:7px;flex-wrap:nowrap}.brandBlock{display:none}.brandMark{width:36px;height:36px}.atlasSwitch{padding:2px}.atlasSwitch a{font-size:.68rem;padding:6px 8px}.primaryBtn{width:40px;padding:0!important;justify-content:center}.primaryBtn span{display:none}#modebar{top:10px;left:10px;right:10px;transform:none;justify-content:flex-start;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;-webkit-mask-image:linear-gradient(90deg,#000 92%,transparent);mask-image:linear-gradient(90deg,#000 92%,transparent)}#modebar::-webkit-scrollbar{display:none}#modebar button{min-width:67px;flex:0 0 auto;padding:7px 8px}#modebar button .me{font-size:.72rem}#modebar button .mj{font-size:.6rem}#panel{inset:0;width:100%;max-width:none;border-radius:0;border:none}#legend{left:8px;right:8px;bottom:8px;max-width:none;max-height:38vh;overflow:auto}footer{display:none}}
 </style>
 </head>
 <body>
@@ -216,6 +216,7 @@
     <button type="button" data-mode="volcano"><span class="mi">🌋</span><span class="me">Volcano</span><span class="mj">火山</span></button>
     <button type="button" data-mode="tsunami"><span class="mi">🌊</span><span class="me">Tsunami</span><span class="mj">津波</span></button>
     <button type="button" data-mode="typhoon"><span class="mi">🌀</span><span class="me">Typhoon</span><span class="mj">台風</span></button>
+    <button type="button" data-mode="tyhist"><span class="mi">🌪️</span><span class="me">Ty. tracks</span><span class="mj">台風の記録</span></button>
     <button type="button" data-mode="history"><span class="mi">🔥</span><span class="me">History</span><span class="mj">地震履歴</span></button>
   </div>
 
@@ -245,6 +246,26 @@
       <option value="4.5" selected>4.5</option><option value="5.5">5.5</option><option value="6.5">6.5</option>
     </select></label>
     <span id="hStatus" style="color:#5A6570"></span>
+  </div>
+
+  <div id="tyhfilter" class="hidden" aria-label="Typhoon track period and month"
+       style="position:absolute;top:192px;left:50%;transform:translateX(-50%);z-index:1000;
+              display:flex;gap:6px;align-items:center;background:#fff;border:1px solid var(--line);
+              border-radius:9px;padding:5px 8px;box-shadow:0 2px 8px rgba(20,35,55,.14);font-size:.78rem;
+              max-width:94vw;flex-wrap:wrap;justify-content:center">
+    <label>Month <select id="tyMonth">
+      <option value="0" selected>All 通年</option>
+      <option value="1">Jan 1月</option><option value="2">Feb 2月</option><option value="3">Mar 3月</option>
+      <option value="4">Apr 4月</option><option value="5">May 5月</option><option value="6">Jun 6月</option>
+      <option value="7">Jul 7月</option><option value="8">Aug 8月</option><option value="9">Sep 9月</option>
+      <option value="10">Oct 10月</option><option value="11">Nov 11月</option><option value="12">Dec 12月</option>
+    </select></label>
+    <label>Since <select id="tyFrom">
+      <option value="2016">2016 (10 y)</option>
+      <option value="1996" selected>1996 (30 y)</option>
+      <option value="1951">1951 (all)</option>
+    </select></label>
+    <span id="tyStatus" style="color:#5A6570"></span>
   </div>
 
   <div id="tsuBanner" class="hidden"></div>
@@ -351,9 +372,10 @@ const modeVolcano = L.layerGroup();
 const modeTsunami = L.layerGroup();
 const modeHistory = L.layerGroup();
 const modeTyphoon = L.layerGroup();
+const modeTyHist  = L.layerGroup();
 const canvas = L.canvas({padding:0.3});
 const MODES = {quake:modeQuake, warn:modeWarn, volcano:modeVolcano, tsunami:modeTsunami,
-               typhoon:modeTyphoon, history:modeHistory};
+               typhoon:modeTyphoon, history:modeHistory, tyhist:modeTyHist};
 let curMode = "quake";
 let quakeWindowH = 168;
 
@@ -784,6 +806,73 @@ async function renderTyphoonMode(){
   }
 }
 
+/* ================= typhoon track history 台風の記録 =================
+   JMA RSMC Tokyo best-track archive (1951–present), pre-processed by
+   scripts/ingest_typhoon_history.py into jma_typhoon_history.js and
+   lazy-loaded on first use so the initial page stays light. Colour =
+   the storm's lifetime minimum central pressure. Climatology, not
+   prediction — and the archive is post-analysis, so a storm active
+   right now appears in Typhoon mode, not here.                        */
+let tyHistLoaded = false, tyHistLoading = false, tyHistError = false;
+let tyHistShown = 0, tyHistRange = "";
+
+function tyClass(minP){
+  if (minP && minP < 920) return {c:"#7E1E4E", w:2.0, label:"< 920 hPa 猛烈 violent"};
+  if (minP && minP < 945) return {c:"#C0392B", w:1.6, label:"920–944 hPa"};
+  if (minP && minP < 970) return {c:"#D96B2B", w:1.3, label:"945–969 hPa"};
+  return {c:"#8A94A0", w:1.1, label:"≥ 970 hPa / weak"};
+}
+
+function renderTyHist(){
+  if (curMode !== "tyhist") return;
+  if (!tyHistLoaded){
+    document.getElementById("summary").textContent = tyHistError
+      ? "Typhoon archive failed to load — is jma_typhoon_history.js next to this file?"
+      : "Loading typhoon best-track archive (1.0 MB, one time)…";
+    if (!tyHistLoading && !tyHistError){
+      tyHistLoading = true;
+      const s = document.createElement("script");
+      s.src = "jma_typhoon_history.js";
+      s.onload = () => { tyHistLoaded = true; tyHistLoading = false; renderTyHist(); };
+      s.onerror = () => { tyHistLoading = false; tyHistError = true; renderTyHist(); updateLegend(); };
+      document.head.appendChild(s);
+    }
+    return;
+  }
+  const month = parseInt(document.getElementById("tyMonth").value, 10);
+  const from  = parseInt(document.getElementById("tyFrom").value, 10);
+  modeTyHist.clearLayers();
+  let shown = 0;
+  for (const st of JMA_TYPHOON_HISTORY.storms){
+    if (st.y < from) continue;
+    if (month && st.mo.indexOf(month) < 0) continue;
+    const k = tyClass(st.minP);
+    const pts = st.t.map(p => [p[0]/10, p[1]/10]);
+    const line = L.polyline(pts, {renderer:canvas, color:k.c, weight:k.w, opacity:0.55});
+    const nm = st.n ? esc(st.n) : "Unnamed storm";
+    const winds = st.maxW
+      ? st.maxW + " kt (" + Math.round(st.maxW*0.514) + " m/s)"
+      : "— <small>(winds not analysed before 1977)</small>";
+    line.bindPopup(
+      "<b>" + nm + "</b> <span style='color:#5A6570'>台風 " + st.id + (st.prov ? " · provisional 速報値" : "") + "</span><br>"
+      + st.sd + " → " + st.ed + "<br>"
+      + "Min pressure: <b>" + (st.minP || "—") + " hPa</b><br>"
+      + "Max sustained wind: " + winds);
+    line.addTo(modeTyHist);
+    shown++;
+  }
+  tyHistShown = shown;
+  const mLabel = month ? document.getElementById("tyMonth").selectedOptions[0].textContent : "all months";
+  tyHistRange = from + "–" + JMA_TYPHOON_HISTORY.storms[JMA_TYPHOON_HISTORY.storms.length-1].y;
+  document.getElementById("tyStatus").textContent = shown + " storms";
+  document.getElementById("summary").textContent =
+    "🌪️ " + shown + " historical typhoon tracks · " + tyHistRange + " · " + mLabel
+    + " · JMA best track (analysed " + JMA_TYPHOON_HISTORY.generated + ")";
+  updateLegend();
+}
+document.getElementById("tyMonth").addEventListener("change", renderTyHist);
+document.getElementById("tyFrom").addEventListener("change", renderTyHist);
+
 /* ================= live warning banner ================= */
 function updateLiveBanner(){
   const el = document.getElementById("liveBanner");
@@ -889,6 +978,17 @@ function updateLegend(){
     L_.innerHTML = "<b>Earthquake density 地震履歴</b>"
       + '<div class="row"><span class="sw" style="background:linear-gradient(90deg,#3E7CB1,#7FE07F,#FFE600,#FF2800)"></span>low → high energy</div>'
       + '<span class="note">Heat = event count weighted by magnitude (energy-like), USGS catalogue, magnitudes may differ slightly from JMA. Choose period and threshold above.</span>';
+  }else if (curMode === "tyhist"){
+    L_.innerHTML = "<b>Typhoon tracks 台風の記録" + (tyHistLoaded ? " · " + tyHistShown + " storms" : "") + "</b>"
+      + '<div class="row"><span class="sw" style="background:#7E1E4E;height:4px;border-radius:2px"></span>&lt; 920 hPa — 猛烈 violent</div>'
+      + '<div class="row"><span class="sw" style="background:#C0392B;height:4px;border-radius:2px"></span>920–944 hPa</div>'
+      + '<div class="row"><span class="sw" style="background:#D96B2B;height:4px;border-radius:2px"></span>945–969 hPa</div>'
+      + '<div class="row"><span class="sw" style="background:#8A94A0;height:4px;border-radius:2px"></span>≥ 970 hPa / weak</div>'
+      + '<span class="note">Colour = lifetime minimum central pressure, JMA RSMC best track (1951–present'
+      + (tyHistLoaded ? ", analysed " + JMA_TYPHOON_HISTORY.generated : "") + "). "
+      + 'This is climatology — where storms <i>have</i> gone, not where the next one will. '
+      + 'The archive is post-analysis: a storm active right now appears under Typhoon 台風, not here. '
+      + 'Winds were not analysed before 1977. Click any track for the storm\'s details.</span>';
   }else{
     L_.innerHTML = "<b>Tsunami bulletins 津波情報</b>"
       + '<div class="row"><span class="sw" style="background:#D03A2A;border-radius:50%"></span>issued in last 24 h</div>'
@@ -911,6 +1011,7 @@ document.getElementById("modebar").addEventListener("click", e => {
   else map.removeLayer(quakeDetail);
   document.getElementById("qfilter").classList.toggle("hidden", curMode !== "quake");
   document.getElementById("hfilter").classList.toggle("hidden", curMode !== "history");
+  document.getElementById("tyhfilter").classList.toggle("hidden", curMode !== "tyhist");
   document.getElementById("tsuBanner").classList.toggle("hidden", curMode !== "tsunami");
   document.getElementById("panel").classList.remove("open");
   // refresh summary line for the newly active mode
@@ -920,6 +1021,7 @@ document.getElementById("modebar").addEventListener("click", e => {
   if (curMode === "tsunami") renderTsunami();
   if (curMode === "history") renderHistory();
   if (curMode === "typhoon") renderTyphoonMode();
+  if (curMode === "tyhist") renderTyHist();
   updateLegend();
 });
 
