@@ -1,0 +1,66 @@
+# Japan Weather Atlas — Live JMA Travel Conditions
+
+An interactive map of Japan weather for travel planning, drawing live data from
+the Japan Meteorological Agency (気象庁). No backend, no build step, no API key —
+two static files that run from a local `file://` open or any static web host.
+
+![map](preview.png)
+
+## What it shows
+
+- **141 cities** — one per JMA forecast sub-region, nationwide (Wakkanai to
+  Ishigaki). Major hubs show at national zoom; the rest appear as you zoom in.
+- **Five map views** (large button bar, top of map):
+  - **Forecast 天気予報** — today's official JMA icon per city + current temp.
+  - **Temp 気温** — every Amedas station, colour-graded with a value scale to 41°C.
+  - **Rain 24h 降水量** — station totals in explicit mm range bands.
+  - **Snow 積雪** — snow depth in cm range bands (empty in summer, and says so).
+  - **Pressure 気圧** — full-domain isobars (surface-chart style) with 低/高 centres.
+- **Typhoon overlay 台風情報** — observed + forecast track, 予報円 probability
+  circles, gale area, and per-point pressure/wind. Appears only when a storm is active.
+- **天気図 Charts** — JMA's official surface analysis + 24/48 h prognostic charts,
+  with a scrubber through the recent archive.
+- **City panel** — click any city for observed conditions, a pressure-trend
+  sparkline, the 3-day forecast (JMA's own wording), 6-hourly rain probability,
+  and the 7-day outlook with JMA reliability ratings.
+- **Draggable legend** — grab the handle to move it; double-click to snap back.
+
+## Files
+
+| File | Purpose |
+|------|---------|
+| `index.html` | The app. (Identical copy: `japan_weather_jma.html`.) |
+| `jma_cities.js` | The city registry, generated from JMA's own area constants. Loaded via `<script>` tag so the app still works from `file://`. |
+
+Both files must sit in the **same folder**.
+
+## Running locally
+
+Double-click `index.html`. That's it — it fetches live data directly from JMA
+and Open-Meteo, both of which send permissive CORS headers.
+
+## Data sources & attribution
+
+- **気象庁 / Japan Meteorological Agency** — forecasts, Amedas observations,
+  typhoon data, and weather charts, via the `jma.go.jp/bosai` JSON/PNG feeds.
+  These are the feeds behind JMA's own site; they are not a documented public
+  API, so paths may change without notice.
+- **Open-Meteo** (JMA GSM model endpoint) — the gridded sea-level pressure field
+  used for the ocean-covering isobars. Free for non-commercial use; see
+  https://open-meteo.com/en/terms .
+- **Leaflet** + **OpenStreetMap** tiles — the map itself.
+
+If you publish this, keep the source credits visible (the footer and legend
+already carry them) and review the terms above — especially Open-Meteo's, if you
+ever expect heavy traffic (they offer a paid tier with higher limits).
+
+## Known limits (by design)
+
+- Isobars are a numerical-model field, not JMA's hand-analysed chart; a 2° grid
+  smooths sharp centres, so a typhoon core may read a few hPa shallower than the
+  official fix. The 🌀 overlay popup carries JMA's official value for comparison.
+- Amedas "grey dots" in the pressure view are the *observed* ground truth on land;
+  where model and observation differ, trust the dots.
+- Snow/gap coverage is shown honestly — an empty layer never implies "no risk".
+- The typhoon feed only carries *active* storms; there is no historical playback
+  after a storm dissipates.
