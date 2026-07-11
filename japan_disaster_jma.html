@@ -89,6 +89,8 @@
   .tyPop{font-size:.9rem;line-height:1.55}
   .tyPop b{font-family:'Shippori Mincho',serif}
   .tyPop .m{color:#5A6570;font-size:.78rem}
+  .tyNameLbl{font-size:11px;font-weight:700;white-space:nowrap;pointer-events:none;
+    text-shadow:0 1px 2px #fff,0 -1px 2px #fff,1px 0 2px #fff,-1px 0 2px #fff}
   .isoLabel{background:#fff;border:1px solid #24425F;border-radius:5px;
     padding:1px 6px;font-size:13px;font-weight:700;color:#24425F;
     white-space:nowrap;box-shadow:0 1px 3px rgba(20,35,55,.25)}
@@ -260,11 +262,7 @@
       <option value="7">Jul 7月</option><option value="8">Aug 8月</option><option value="9">Sep 9月</option>
       <option value="10">Oct 10月</option><option value="11">Nov 11月</option><option value="12">Dec 12月</option>
     </select></label>
-    <label>Since <select id="tyFrom">
-      <option value="2016">2016 (10 y)</option>
-      <option value="1996" selected>1996 (30 y)</option>
-      <option value="1951">1951 (all)</option>
-    </select></label>
+    <label>Period <select id="tyFrom"></select></label>
     <span id="tyStatus" style="color:#5A6570"></span>
   </div>
 
@@ -839,16 +837,36 @@ function renderTyHist(){
     }
     return;
   }
+  const storms = JMA_TYPHOON_HISTORY.storms;
+  const maxY = storms[storms.length-1].y;
+  const selFrom = document.getElementById("tyFrom");
+  if (!selFrom.options.length){
+    // single seasons first (most informative view), then ranges
+    for (let y = maxY; y > maxY-6; y--){
+      const o = document.createElement("option");
+      o.value = String(y); o.textContent = y + "年";
+      selFrom.appendChild(o);
+    }
+    for (const [v, t] of [["r10","Last 10 years"], ["r20","Last 20 years"], ["all","All 1951–" + maxY]]){
+      const o = document.createElement("option");
+      o.value = v; o.textContent = t;
+      selFrom.appendChild(o);
+    }
+    selFrom.value = String(maxY);
+  }
   const month = parseInt(document.getElementById("tyMonth").value, 10);
-  const from  = parseInt(document.getElementById("tyFrom").value, 10);
+  const pv = selFrom.value;
+  const yearOf = /^\d{4}$/.test(pv) ? parseInt(pv, 10) : 0;
+  const from = yearOf ? yearOf : (pv === "r10" ? maxY-9 : pv === "r20" ? maxY-19 : 0);
   modeTyHist.clearLayers();
   let shown = 0;
-  for (const st of JMA_TYPHOON_HISTORY.storms){
-    if (st.y < from) continue;
+  for (const st of storms){
+    if (yearOf ? st.y !== yearOf : st.y < from) continue;
     if (month && st.mo.indexOf(month) < 0) continue;
     const k = tyClass(st.minP);
     const pts = st.t.map(p => [p[0]/10, p[1]/10]);
-    const line = L.polyline(pts, {renderer:canvas, color:k.c, weight:k.w, opacity:0.55});
+    const line = L.polyline(pts, {renderer:canvas, color:k.c,
+      weight: yearOf ? k.w + 0.8 : k.w, opacity: yearOf ? 0.8 : 0.55});
     const nm = st.n ? esc(st.n) : "Unnamed storm";
     const winds = st.maxW
       ? st.maxW + " kt (" + Math.round(st.maxW*0.514) + " m/s)"
@@ -859,11 +877,17 @@ function renderTyHist(){
       + "Min pressure: <b>" + (st.minP || "—") + " hPa</b><br>"
       + "Max sustained wind: " + winds);
     line.addTo(modeTyHist);
+    if (yearOf){
+      // single-season view: label each storm by name at its final position
+      L.marker(pts[pts.length-1], {interactive:false, icon:L.divIcon({className:"",
+        html:'<div class="tyNameLbl" style="color:'+k.c+'">'+(st.n||("台風"+st.id))+'</div>',
+        iconSize:null, iconAnchor:[0,6]})}).addTo(modeTyHist);
+    }
     shown++;
   }
   tyHistShown = shown;
   const mLabel = month ? document.getElementById("tyMonth").selectedOptions[0].textContent : "all months";
-  tyHistRange = from + "–" + JMA_TYPHOON_HISTORY.storms[JMA_TYPHOON_HISTORY.storms.length-1].y;
+  tyHistRange = yearOf ? String(yearOf) : (pv === "all" ? "1951–" + maxY : from + "–" + maxY);
   document.getElementById("tyStatus").textContent = shown + " storms";
   document.getElementById("summary").textContent =
     "🌪️ " + shown + " historical typhoon tracks · " + tyHistRange + " · " + mLabel
