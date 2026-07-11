@@ -74,6 +74,9 @@
   .isoLabel{background:#fff;border:1px solid #24425F;border-radius:5px;
     padding:1px 6px;font-size:12px;font-weight:700;color:#24425F;
     white-space:nowrap;box-shadow:0 1px 3px rgba(20,35,55,.25)}
+  .sbhidden{display:none!important}
+  .phenDateLbl{font-size:10.5px;font-weight:700;white-space:nowrap;pointer-events:none;color:#243B53;
+    text-shadow:0 1px 2px #fff,0 -1px 2px #fff,1px 0 2px #fff,-1px 0 2px #fff}
   .hlMark{font-family:'Shippori Mincho',serif;font-weight:700;text-align:center;
     line-height:1.05;text-shadow:0 1px 3px #fff,0 -1px 3px #fff,1px 0 3px #fff,-1px 0 3px #fff}
   .hlMark .hl{font-size:1.5rem}
@@ -288,13 +291,16 @@
     .appHeader{min-height:68px;padding:10px 12px}.liveSummary{display:none}.brandBlock{min-width:auto}.brandSub{display:none}.searchWrap{min-width:180px}
   }
   @media(max-width:640px){
-    .appHeader{gap:7px;flex-wrap:nowrap}.atlasSwitch{display:none}.brandMark{width:36px;height:36px}.appHeader h1{font-size:.98rem}.headerActions{gap:5px}.searchWrap{min-width:0;width:132px}.appHeader button{width:40px;padding:0;justify-content:center}.appHeader button span{display:none}
+    .appHeader{gap:7px;flex-wrap:nowrap}.brandBlock{display:none}
+    .atlasSwitch{padding:2px}.atlasSwitch a{font-size:.68rem;padding:6px 8px}
+    .brandMark{width:36px;height:36px}.headerActions{gap:5px}.searchWrap{min-width:0;width:118px}.appHeader button{width:40px;padding:0;justify-content:center}.appHeader button span{display:none}
     /* mode bar: horizontally scrollable, snug, with a right-edge fade cueing more */
     #modebar{top:10px;left:10px;right:10px;transform:none;justify-content:flex-start;
       overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;
       -webkit-mask-image:linear-gradient(90deg,#000 92%,transparent);
       mask-image:linear-gradient(90deg,#000 92%,transparent)}
     #modebar::-webkit-scrollbar{display:none}
+    #seasonbar{top:96px!important;left:10px!important;right:10px!important;transform:none!important;max-width:none!important;justify-content:flex-start!important}
     #modebar button{min-width:60px;padding:7px 9px;flex:0 0 auto}
     #modebar button .me{font-size:.68rem}#modebar button .mj{font-size:.58rem}
     .mapHint{display:none}
@@ -348,6 +354,20 @@
 
 <div id="wrap">
   <div id="map">
+  </div>
+  <div id="seasonbar" class="sbhidden" aria-label="Season phenomenon and year"
+       style="position:absolute;top:104px;left:50%;transform:translateX(-50%);z-index:1000;
+              display:flex;gap:7px;align-items:center;background:#fff;border:1px solid var(--line);
+              border-radius:9px;padding:5px 9px;box-shadow:0 2px 8px rgba(20,35,55,.14);font-size:.8rem;
+              max-width:94vw;flex-wrap:wrap;justify-content:center">
+    <label>Record <select id="phenSel">
+      <option value="sakura_kaika" selected>🌸 Sakura first bloom 開花</option>
+      <option value="sakura_mankai">🌸 Sakura full bloom 満開</option>
+      <option value="kaede">🍁 Maple red かえで紅葉</option>
+      <option value="icho">💛 Ginkgo yellow いちょう黄葉</option>
+    </select></label>
+    <label>Year <select id="phenYear"><option value="" disabled selected>loading…</option></select></label>
+    <span id="phenStatus" style="color:#5A6570"></span>
   </div><div class="mapHint">Select a city marker for live conditions and a 7-day outlook</div>
   <nav id="modebar" aria-label="Map view"></nav>
   <div id="status"><div class="card" id="statusCard">Loading JMA forecasts and observations…<small>気象庁 forecast + Amedas アメダス</small></div></div>
@@ -491,13 +511,15 @@ const modeTemp  = L.layerGroup();
 const modeRain  = L.layerGroup();
 const modeSnow  = L.layerGroup();
 const modePres  = L.layerGroup();
+const modeSeasons = L.layerGroup();
 
 const MODE_DEFS = [
   {id:"forecast", layer:modeForecast, ico:"☀️", en:"Forecast", jp:"天気予報"},
   {id:"temp",     layer:modeTemp,     ico:"🌡️", en:"Temp",     jp:"気温"},
   {id:"rain",     layer:modeRain,     ico:"☂️", en:"Rain 24h", jp:"降水量"},
   {id:"snow",     layer:modeSnow,     ico:"❄️", en:"Snow",     jp:"積雪"},
-  {id:"pres",     layer:modePres,     ico:"〰️", en:"Pressure", jp:"気圧・等圧線"}
+  {id:"pres",     layer:modePres,     ico:"〰️", en:"Pressure", jp:"気圧・等圧線"},
+  {id:"seasons",  layer:modeSeasons,  ico:"🌸", en:"Seasons",  jp:"季節・記録"}
 ];
 let activeMode = MODE_DEFS[0];
 modeForecast.addTo(map);
@@ -545,8 +567,10 @@ function setMode(def){
   def.btn.setAttribute("aria-pressed","true");
   activeMode = def;
   updateLegend();
-  if (def.id !== "forecast" && !stationTable) ensureStationTable();
+  document.getElementById("seasonbar").classList.toggle("sbhidden", def.id !== "seasons");
+  if (def.id !== "forecast" && def.id !== "seasons" && !stationTable) ensureStationTable();
   if (def.id === "pres") ensureModelIsobars();
+  if (def.id === "seasons") renderSeasons();
 }
 
 /* ================= typhoon overlay 台風情報 ================= */
@@ -815,6 +839,15 @@ function updateLegend(){
     legendBands("Snow depth 積雪 (cm)", SNOW_BANDS,
       n === 0 ? "No station is currently reporting snow depth — normal in summer. Absence of dots here ≠ absence of snow risk in high mountains."
               : n + " stations currently reporting snow on the ground; colour = the cm range shown.");
+  } else if (map.hasLayer(modeSeasons)){
+    const P = phenLoaded ? JMA_PHENOLOGY.phen[document.getElementById("phenSel").value] : null;
+    legendBands(P ? P.label : "Seasonal records 季節・記録", phenBands(),
+      (phenLoaded ? "" : (phenError ? "Archive unavailable — jma_phenology.js must sit next to this file. " : "Loading… "))
+      + "Colour = the date range the observed date falls in; zoom in for date labels; tap a dot for the exact date vs normal. "
+      + "These are JMA observations of one specimen tree per station — a city-level record, not a spot guide, and a record of what happened, never a forecast. "
+      + "Sakura records reach back to 1953; JMA publishes foliage history beyond the latest two seasons only as PDFs. "
+      + "Hollow dots = no record that year (absence of a record ≠ absence of the phenomenon)."
+      + (phenLoaded ? " Archive generated " + JMA_PHENOLOGY.generated + "." : ""));
   } else if (map.hasLayer(modePres)){
     legendDiv.innerHTML = legendGrab() + "<b>Sea-level pressure 海面気圧</b><br>"
       + '<svg width="200" height="30">'
@@ -1244,6 +1277,127 @@ async function loadPressureTrend(c, seq){
 }
 
 function closePanel(){ document.getElementById("panel").classList.remove("open"); }
+
+/* ================= seasons — phenology records 季節・記録 =================
+   Observed dates only, never forecasts: sakura first/full bloom back to
+   1953 and recent foliage seasons, from JMA's phenological observations
+   (specimen trees at ~58 staffed stations). Pre-processed into the static
+   jma_phenology.js by scripts/ingest_phenology.py and lazy-loaded here.  */
+let phenLoaded = false, phenLoading = false, phenError = false;
+
+const SPRING_BANDS = [
+  {max:"0310", color:"#C9548A", label:"≤3/10"},
+  {max:"0320", color:"#D96B2B", label:"3/11–20"},
+  {max:"0331", color:"#C9A227", label:"3/21–31"},
+  {max:"0410", color:"#5FA88F", label:"4/1–10"},
+  {max:"0430", color:"#4C7FB8", label:"4/11–30"},
+  {max:"1231", color:"#7A6FD0", label:"5月+"}
+];
+const AUTUMN_BANDS = [
+  {max:"1031", color:"#C0392B", label:"≤10/31"},
+  {max:"1110", color:"#D96B2B", label:"11/1–10"},
+  {max:"1120", color:"#C9A227", label:"11/11–20"},
+  {max:"1130", color:"#5FA88F", label:"11/21–30"},
+  {max:"1214", color:"#4C7FB8", label:"12/1–14"},
+  {max:"1231", color:"#24425F", label:"12/15+"}
+];
+function phenBands(){
+  const p = document.getElementById("phenSel").value;
+  return (p === "kaede" || p === "icho") ? AUTUMN_BANDS : SPRING_BANDS;
+}
+function phenBandColor(v){
+  for (const b of phenBands()) if (v <= b.max) return b.color;
+  return phenBands()[phenBands().length-1].color;
+}
+function fmtMd(v){ return parseInt(v.slice(0,2),10) + "/" + parseInt(v.slice(2),10); }
+function dayDiff(a, b){ // a,b as MMDD within same nominal year
+  const D = s => new Date(2001, parseInt(s.slice(0,2),10)-1, parseInt(s.slice(2),10));
+  return Math.round((D(a) - D(b)) / 86400000);
+}
+
+function renderSeasons(){
+  if (activeMode.id !== "seasons") return;
+  if (!phenLoaded){
+    document.getElementById("phenStatus").textContent = phenError
+      ? "archive failed — is jma_phenology.js present?" : "loading records…";
+    if (phenError){
+      document.getElementById("phenYear").innerHTML =
+        '<option value="" disabled selected>⚠ jma_phenology.js missing</option>';
+    }
+    if (!phenLoading && !phenError){
+      phenLoading = true;
+      const s = document.createElement("script");
+      s.src = "jma_phenology.js";
+      s.onload = () => { phenLoaded = true; phenLoading = false; renderSeasons(); };
+      s.onerror = () => { phenLoading = false; phenError = true; renderSeasons(); updateLegend(); };
+      document.head.appendChild(s);
+    }
+    return;
+  }
+  const phenKey = document.getElementById("phenSel").value;
+  const P = JMA_PHENOLOGY.phen[phenKey];
+  const yearSel = document.getElementById("phenYear");
+  // (re)populate years for this phenomenon: newest first, then 平年 normals
+  const wanted = Object.keys(P.years).sort((a,b) => b-a);
+  const existing = [...yearSel.options].map(o => o.value).join(",");
+  if (existing !== wanted.concat("normal").join(",")){
+    const keep = yearSel.value;
+    yearSel.innerHTML = "";
+    for (const y of wanted){
+      const o = document.createElement("option");
+      o.value = y; o.textContent = y + "年";
+      yearSel.appendChild(o);
+    }
+    const o = document.createElement("option");
+    o.value = "normal"; o.textContent = "平年 Normal 1991–2020";
+    yearSel.appendChild(o);
+    yearSel.value = wanted.indexOf(keep) >= 0 ? keep : wanted[0];
+  }
+  const yv = yearSel.value;
+  const dat = yv === "normal" ? P.normal : P.years[yv];
+  const showLbl = map.getZoom() >= 6;
+  modeSeasons.clearLayers();
+  let n = 0, missing = 0;
+  for (const [st, ll] of Object.entries(JMA_PHENOLOGY.stations)){
+    const v = dat[st];
+    if (!v){
+      if (P.normal[st] !== undefined || Object.values(P.years).some(m => m[st])){
+        // station observes this phenomenon, just not in this year
+        L.circleMarker(ll, {renderer:canvas, radius:3, weight:1, color:"#9AA7B2",
+          fillColor:"#fff", fillOpacity:0.7})
+          .bindPopup("<b>" + st + "</b><br>" + P.label + "<br>No observation recorded "
+            + (yv === "normal" ? "in the normals" : "in " + yv)
+            + ".<br><small>Absence of a record ≠ absence of the phenomenon.</small>")
+          .addTo(modeSeasons);
+        missing++;
+      }
+      continue;
+    }
+    const nor = P.normal[st];
+    const diff = nor ? dayDiff(v, nor) : null;
+    const sp = (P.species && P.species[st]) ? P.species[st] : "";
+    L.circleMarker(ll, {renderer:canvas, radius:7, weight:1.5, color:"#fff",
+      fillColor:phenBandColor(v), fillOpacity:0.95})
+      .bindPopup("<b>" + st + "</b> · " + P.label + "<br>"
+        + (yv === "normal" ? "Normal 平年: " : yv + ": ") + "<b>" + fmtMd(v) + "</b>"
+        + (yv !== "normal" && nor ? "<br>vs normal " + fmtMd(nor) + ": "
+            + (diff === 0 ? "on the normal day" : (diff > 0 ? diff + " days late" : (-diff) + " days early")) : "")
+        + (sp ? "<br><small>Species: " + sp + " (not somei-yoshino)</small>" : ""))
+      .addTo(modeSeasons);
+    if (showLbl){
+      L.marker(ll, {interactive:false, icon:L.divIcon({className:"",
+        html:'<div class="phenDateLbl">' + fmtMd(v) + '</div>',
+        iconSize:null, iconAnchor:[-7,6]})}).addTo(modeSeasons);
+    }
+    n++;
+  }
+  document.getElementById("phenStatus").textContent =
+    n + " stations" + (missing ? " (+" + missing + " no record)" : "");
+  updateLegend();
+}
+document.getElementById("phenSel").addEventListener("change", renderSeasons);
+document.getElementById("phenYear").addEventListener("change", renderSeasons);
+map.on("zoomend", () => { if (activeMode.id === "seasons" && phenLoaded) renderSeasons(); });
 
 /* ================= dropdown ================= */
 (function(){

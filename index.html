@@ -366,7 +366,7 @@
       <option value="kaede">🍁 Maple red かえで紅葉</option>
       <option value="icho">💛 Ginkgo yellow いちょう黄葉</option>
     </select></label>
-    <label>Year <select id="phenYear"></select></label>
+    <label>Year <select id="phenYear"><option value="" disabled selected>loading…</option></select></label>
     <span id="phenStatus" style="color:#5A6570"></span>
   </div><div class="mapHint">Select a city marker for live conditions and a 7-day outlook</div>
   <nav id="modebar" aria-label="Map view"></nav>
@@ -1320,6 +1320,10 @@ function renderSeasons(){
   if (!phenLoaded){
     document.getElementById("phenStatus").textContent = phenError
       ? "archive failed — is jma_phenology.js present?" : "loading records…";
+    if (phenError){
+      document.getElementById("phenYear").innerHTML =
+        '<option value="" disabled selected>⚠ jma_phenology.js missing</option>';
+    }
     if (!phenLoading && !phenError){
       phenLoading = true;
       const s = document.createElement("script");
