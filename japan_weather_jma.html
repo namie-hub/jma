@@ -328,6 +328,21 @@
     #panel{overflow-y:auto}
   }
 </style>
+
+<style id="atlas-v4-upgrade">
+  .overviewBtn{background:rgba(255,255,255,.1)!important;color:#fff!important;border:1px solid rgba(255,255,255,.2)!important}
+  .wx-chip.unavailable{opacity:.5;filter:grayscale(1)}
+  #timeDock{display:none;position:absolute;left:50%;bottom:18px;transform:translateX(-50%);z-index:1000;width:min(720px,calc(100% - 36px));background:rgba(255,255,255,.95);border:1px solid rgba(16,42,67,.12);border-radius:18px;padding:10px 12px;box-shadow:0 14px 38px rgba(15,39,64,.2);backdrop-filter:blur(14px)}
+  .timeHead{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:7px}.timeTitle{font-size:.68rem;font-weight:700;letter-spacing:.12em;color:#617184;text-transform:uppercase}.timeStatus{font-size:.74rem;color:#173a57;font-weight:700}
+  .dayRail{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}.dayRail button{font-family:inherit;border:0;background:transparent;border-radius:11px;padding:7px 4px;cursor:pointer;color:#536274}.dayRail button:hover{background:#eef4f7}.dayRail button.active{background:linear-gradient(145deg,#183b56,#102a43);color:#fff;box-shadow:0 5px 12px rgba(16,42,67,.2)}.dayRail strong,.dayRail small{display:block}.dayRail strong{font-size:.75rem}.dayRail small{font-size:.62rem;opacity:.72;margin-top:2px}
+  #overviewBox{position:fixed;inset:0;z-index:2300;background:rgba(9,24,39,.72);display:none;align-items:center;justify-content:center;padding:18px;backdrop-filter:blur(8px)}#overviewBox.open{display:flex}
+  .overviewCard{width:min(980px,96vw);max-height:92vh;overflow:auto;background:#f4f7f9;border-radius:24px;box-shadow:0 30px 90px rgba(0,0,0,.38)}
+  .overviewHero{position:relative;padding:28px 30px 24px;color:#fff;background:radial-gradient(circle at 82% 15%,rgba(242,181,68,.3),transparent 28%),linear-gradient(135deg,#0d253d,#1c4968);border-radius:24px 24px 0 0}.overviewHero h2{font-family:'Shippori Mincho',serif;font-size:2rem}.overviewHero p{opacity:.72;margin-top:5px}.overviewClose{position:absolute;right:18px;top:18px;width:38px;height:38px;border:0;border-radius:50%;background:rgba(255,255,255,.12);color:#fff;font-size:1.35rem;cursor:pointer}
+  .overviewGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:18px}.metricCard{background:#fff;border:1px solid #dfe7ed;border-radius:16px;padding:16px;min-height:126px}.metricIcon{font-size:1.35rem}.metricLabel{font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:#718094;font-weight:700;margin-top:9px}.metricValue{font-family:'Shippori Mincho',serif;font-weight:700;font-size:1.42rem;color:#102a43;margin-top:5px}.metricSub{font-size:.73rem;color:#657587;margin-top:4px}.overviewStrip{margin:0 18px 18px;background:#fff;border:1px solid #dfe7ed;border-radius:16px;padding:16px 18px;display:flex;align-items:center;gap:14px}.overviewStrip .bigIcon{font-size:2rem}.overviewStrip b{display:block;color:#102a43}.overviewStrip span{font-size:.78rem;color:#657587}
+  @media(max-width:760px){#timeDock{bottom:8px;width:calc(100% - 16px);padding:8px}.timeHead{margin-bottom:5px}.dayRail{gap:2px}.dayRail button{padding:6px 2px}.overviewGrid{grid-template-columns:repeat(2,1fr);padding:12px}.overviewHero{padding:24px 20px 20px}.overviewHero h2{font-size:1.55rem}.overviewStrip{margin:0 12px 12px}.mapHint{display:none}}
+  @media(max-width:420px){.dayRail button:nth-child(n+6){display:none}.dayRail{grid-template-columns:repeat(5,1fr)}}
+</style>
+
 </head>
 <body>
 
@@ -409,6 +424,14 @@
     <div id="chartImgWrap"></div>
     <div id="chartCap"></div>
   </div>
+</div>
+
+
+<div id="overviewBox" role="dialog" aria-modal="true" aria-label="Japan weather overview">
+  <section class="overviewCard">
+    <div class="overviewHero"><button class="overviewClose" type="button" aria-label="Close overview">×</button><h2>Today in Japan</h2><p id="overviewIssued">Live national snapshot from JMA observations</p></div>
+    <div class="overviewGrid" id="overviewGrid"></div><div class="overviewStrip" id="overviewStrip"></div>
+  </section>
 </div>
 
 <footer>
@@ -558,7 +581,7 @@ modeForecast.addTo(map);
 })();
 
 function setMode(def){
-  if (def === activeMode) return;
+  if (def === activeMode){ syncForecastDock(); return; }
   map.removeLayer(activeMode.layer);
   map.addLayer(def.layer);
   activeMode.btn.classList.remove("active");
@@ -571,6 +594,7 @@ function setMode(def){
   if (def.id !== "forecast" && def.id !== "seasons" && !stationTable) ensureStationTable();
   if (def.id === "pres") ensureModelIsobars();
   if (def.id === "seasons") renderSeasons();
+  syncForecastDock();
 }
 
 /* ================= typhoon overlay 台風情報 ================= */
@@ -821,7 +845,7 @@ function legendBands(title, bands, note){
 function updateLegend(){
   if (!legendDiv) return;
   if (map.hasLayer(modeForecast)){
-    legendDiv.innerHTML = legendGrab() + "<b>Today's JMA forecast</b><br>"
+    legendDiv.innerHTML = legendGrab() + '<b>' + (selectedForecastDay===0 ? "Today's JMA forecast" : 'JMA forecast · Day +'+selectedForecastDay+' · '+jstDayKey(selectedForecastDay)) + '</b><br>'
       + '<span class="sw" style="background:#E3A63B"></span>Sunny 晴<br>'
       + '<span class="sw" style="background:#8A94A0"></span>Cloudy 曇<br>'
       + '<span class="sw" style="background:#3E7CB1"></span>Rain 雨<br>'
@@ -1422,6 +1446,120 @@ map.on("zoomend", () => { if (activeMode.id === "seasons" && phenLoaded) renderS
     if (c){ map.setView([c.lat,c.lon], 8); openPanel(c); }
   });
 })();
+
+
+/* ================= v4 product layer: national overview + forecast time rail ================= */
+let selectedForecastDay = 0;
+
+function jstDayKey(offset){
+  const now = new Date();
+  const parts = new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Tokyo',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(now);
+  const vals = Object.fromEntries(parts.map(x=>[x.type,x.value]));
+  const base = new Date(Date.UTC(+vals.year,+vals.month-1,+vals.day));
+  base.setUTCDate(base.getUTCDate()+offset);
+  return base.toISOString().slice(0,10);
+}
+function codeFromSeries(ts, c, targetKey){
+  if (!ts || !ts.timeDefines) return null;
+  const idx = ts.timeDefines.findIndex(x=>String(x).slice(0,10)===targetKey);
+  if (idx < 0) return null;
+  const area = pickArea(ts, c.region);
+  if (!area || !area.weatherCodes) return null;
+  return area.weatherCodes[idx] || null;
+}
+function forecastCode(c, offset){
+  const rep = forecastByOffice[c.office];
+  if (!rep) return null;
+  const targetKey = jstDayKey(offset);
+  // JMA short-range feed normally covers today through Day +2.
+  const shortCode = rep[0] && rep[0].timeSeries ? codeFromSeries(rep[0].timeSeries[0], c, targetKey) : null;
+  if (shortCode) return shortCode;
+  // JMA weekly feed supplies the later days. Match by date; never repeat/clamp a stale symbol.
+  const weekCode = rep[1] && rep[1].timeSeries ? codeFromSeries(rep[1].timeSeries[0], c, targetKey) : null;
+  return weekCode || null;
+}
+todayCode = function(c){ return forecastCode(c, selectedForecastDay); };
+
+renderChips = function(){
+  for (const c of CITIES){
+    const code = todayCode(c);
+    const info = code === null ? {cls:'cloud',ico:'·',txt:'Forecast unavailable'} : wxFromCode(code);
+    const t = selectedForecastDay === 0 ? obsVal(amedasMap[c.amedas], "temp") : null;
+    const tempTxt = (t === null) ? "" : Math.round(t) + "°";
+    const unavailable = code === null ? ' unavailable' : '';
+    const icon = L.divIcon({className:"",html:'<div class="wx-chip ' + info.cls + unavailable + '"><span class="ico">' + info.ico + '</span>' + tempTxt + '</div>',iconSize:null,iconAnchor:[28,12]});
+    const title=c.n+" ("+c.jp+") — "+info.txt+" · "+jstDayKey(selectedForecastDay);
+    if (markers[c.amedas]){ markers[c.amedas].setIcon(icon); markers[c.amedas].options.title=title; }
+    else { const m=L.marker([c.lat,c.lon],{icon,title});m.on("click",()=>openPanel(c));m.addTo(c.major?chipMajor:chipMinor);markers[c.amedas]=m; }
+  }
+};
+
+function buildTimeDock(){
+  const dock=document.createElement("section");dock.id="timeDock";dock.setAttribute("aria-label","Forecast day selector");
+  dock.innerHTML='<div class="timeHead"><span class="timeTitle">Forecast timeline · 予報日</span><span class="timeStatus" id="timeStatus">Today · live observations</span></div><div class="dayRail" id="dayRail"></div>';
+  document.getElementById("wrap").appendChild(dock);
+  const rail=dock.querySelector("#dayRail");
+  const now=new Date();
+  for(let i=0;i<7;i++){
+    const d=new Date(now.getTime()+i*86400000);const b=document.createElement("button");b.type="button";b.dataset.day=i;
+    b.innerHTML='<strong>'+(i===0?'Today':d.toLocaleDateString('en-GB',{weekday:'short',timeZone:'Asia/Tokyo'}))+'</strong><small>'+d.toLocaleDateString('en-GB',{day:'numeric',month:'short',timeZone:'Asia/Tokyo'})+'</small>';
+    if(i===0)b.classList.add("active");b.addEventListener("click",()=>selectForecastDay(i,b));rail.appendChild(b);
+  }
+}
+function syncForecastDock(){
+  const dock=document.getElementById('timeDock');
+  if (!dock) return;
+  dock.style.display = activeMode && activeMode.id==='forecast' ? 'block' : 'none';
+}
+function selectForecastDay(i,b){
+  selectedForecastDay=i;document.querySelectorAll('#dayRail button').forEach(x=>x.classList.toggle('active',x===b));
+  const available=CITIES.some(c=>forecastCode(c,i)!==null);
+  const label=i===0?'Today · live observations':'Day +'+i+' · '+(available?'JMA forecast':'forecast unavailable');
+  document.getElementById('timeStatus').textContent=label;
+  renderChips();
+  updateLegend();
+}
+
+function extreme(kind){
+  let best=null;
+  for(const c of CITIES){const o=amedasMap[c.amedas]||{};let v=null;
+    if(kind==='hot'||kind==='cold')v=obsVal(o,'temp');
+    if(kind==='wet')v=obsVal(o,'precipitation24h');
+    if(kind==='wind')v=obsVal(o,'wind');
+    if(v===null)continue;if(!best||(kind==='cold'?v<best.v:v>best.v))best={c,v};
+  }return best;
+}
+function renderOverview(){
+  const hot=extreme('hot'),cold=extreme('cold'),wet=extreme('wet'),wind=extreme('wind');
+  const rainy=CITIES.filter(c=>{const code=forecastCode(c,0);return code&&String(code).startsWith('3')}).length;
+  const snowy=CITIES.filter(c=>{const code=forecastCode(c,0);return code&&String(code).startsWith('4')}).length;
+  const cards=[
+    ['🌡️','Warmest',hot?hot.v.toFixed(1)+'°C':'—',hot?hot.c.n+' · '+hot.c.jp:'Observation unavailable'],
+    ['🧊','Coolest',cold?cold.v.toFixed(1)+'°C':'—',cold?cold.c.n+' · '+cold.c.jp:'Observation unavailable'],
+    ['🌧️','Wettest 24h',wet?wet.v.toFixed(1)+' mm':'—',wet?wet.c.n+' · '+wet.c.jp:'Observation unavailable'],
+    ['💨','Strongest wind',wind?wind.v.toFixed(1)+' m/s':'—',wind?wind.c.n+' · '+wind.c.jp:'Observation unavailable'],
+    ['☂️','Rain outlook',rainy+' cities','Major and regional forecast points'],
+    ['❄️','Snow outlook',snowy+' cities','Major and regional forecast points'],
+    ['🌀','Active typhoons',String(activeTyphoons.length),activeTyphoons.length?activeTyphoons.map(x=>x.label).join(' · '):'None listed by JMA'],
+    ['📡','Observation time',amedasTimeIso?amedasTimeIso.slice(11,16)+' JST':'—',amedasTimeIso?amedasTimeIso.slice(0,10):'JMA feed unavailable']
+  ];
+  document.getElementById('overviewGrid').innerHTML=cards.map(x=>'<article class="metricCard"><div class="metricIcon">'+x[0]+'</div><div class="metricLabel">'+x[1]+'</div><div class="metricValue">'+x[2]+'</div><div class="metricSub">'+x[3]+'</div></article>').join('');
+  const dominant=rainy>snowy&&rainy>8?'Rain is the main travel consideration today.':snowy>3?'Snow is affecting several forecast areas.':'Conditions are mixed across the archipelago.';
+  document.getElementById('overviewStrip').innerHTML='<div class="bigIcon">🗾</div><div><b>National travel read</b><span>'+dominant+' Open any city for local observations, rain probability, wind and the week ahead.</span></div>';
+  document.getElementById('overviewIssued').textContent='Live national snapshot · '+(amedasTimeIso?amedasTimeIso.replace('T',' ').slice(0,16)+' JST':'JMA observations');
+}
+function openOverview(){renderOverview();document.getElementById('overviewBox').classList.add('open');}
+function closeOverview(){document.getElementById('overviewBox').classList.remove('open');}
+
+(function installProductLayer(){
+  const actions=document.querySelector('.headerActions');const b=document.createElement('button');b.type='button';b.className='overviewBtn';b.innerHTML='🗾 <span>Overview</span>';b.addEventListener('click',openOverview);actions.insertBefore(b,actions.firstChild);
+  buildTimeDock();
+  syncForecastDock();
+  document.querySelector('.overviewClose').addEventListener('click',closeOverview);
+  document.getElementById('overviewBox').addEventListener('click',e=>{if(e.target.id==='overviewBox')closeOverview();});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')closeOverview();});
+})();
+
 
 document.getElementById("refreshBtn").addEventListener("click", loadAll);
 updateLegend();

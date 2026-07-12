@@ -6,6 +6,12 @@ a static, no-build package that runs from a local `file://` open or any static w
 
 ![map](preview.png)
 
+## v4 interface upgrade
+
+- **Today in Japan overview**: a national snapshot of warmest/coolest, wettest, strongest wind, rain/snow outlook, typhoons and observation time.
+- **Interactive 7-day forecast rail**: changes weather markers across the map by forecast day while preserving live observed temperatures for today.
+- **Responsive product polish**: desktop modal dashboard, compact mobile layout, keyboard Escape close and click-outside dismissal.
+
 ## What it shows
 
 - **141 cities** — one per JMA forecast sub-region, nationwide (Wakkanai to
@@ -105,3 +111,9 @@ this is a city-level record, not a temple-by-temple guide. Refresh during
 spring and autumn with:
 
     python3 scripts/ingest_phenology.py jma_phenology.js
+
+### v4.1 forecast timeline correction
+- The timeline is visible only while **Forecast / 天気予報** mode is active.
+- Days are matched by JST calendar date across both JMA feeds: short-range (today through roughly Day +2) and weekly (later days).
+- Later dates are never filled by repeating the last short-range symbol; unavailable forecasts are shown explicitly.
+- The forecast legend updates to the selected date.
