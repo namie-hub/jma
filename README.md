@@ -117,3 +117,8 @@ spring and autumn with:
 - Days are matched by JST calendar date across both JMA feeds: short-range (today through roughly Day +2) and weekly (later days).
 - Later dates are never filled by repeating the last short-range symbol; unavailable forecasts are shown explicitly.
 - The forecast legend updates to the selected date.
+
+### v4.3 mobile legend redesign
+- Forecast mode no longer places the full Leaflet legend above the timeline on narrow screens.
+- A compact `Key · 凡例` control in the forecast dock opens a separate, dismissible legend sheet.
+- The sheet refreshes when the selected forecast day changes and closes automatically when leaving Forecast mode.

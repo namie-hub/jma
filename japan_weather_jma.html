@@ -371,6 +371,25 @@
   }
 </style>
 
+
+<style id="forecast-mobile-legend-redesign">
+  .forecastLegendBtn{display:none;border:1px solid rgba(16,42,67,.16);background:#eef4f7;color:#173a57;border-radius:10px;padding:6px 10px;font:700 .7rem inherit;cursor:pointer;white-space:nowrap}
+  #forecastLegendSheet{display:none;position:absolute;z-index:1100;background:rgba(255,255,255,.98);border:1px solid rgba(16,42,67,.14);border-radius:16px;box-shadow:0 16px 42px rgba(15,39,64,.25);backdrop-filter:blur(14px);overflow:hidden}
+  #forecastLegendSheet.open{display:block}
+  .forecastLegendSheetHead{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid #e2e8ed;font-size:.72rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#617184}
+  .forecastLegendClose{border:0;background:transparent;color:#173a57;font-size:1.2rem;line-height:1;cursor:pointer;padding:1px 5px}
+  .forecastLegendContent{padding:12px 14px;color:#162238;font-size:.88rem;line-height:1.5;max-height:34vh;overflow:auto}
+  .forecastLegendContent .grab{display:none!important}
+  .forecastLegendContent b{display:block;font-family:'Shippori Mincho',serif;font-size:1.05rem;margin-bottom:7px}
+  @media(max-width:760px){
+    body.forecast-dock-open .leaflet-control-container .legend{display:none!important}
+    .forecastLegendBtn{display:inline-flex;align-items:center;gap:5px}
+    #forecastLegendSheet{left:8px;right:8px;bottom:calc(var(--forecast-dock-clearance) + 8px)}
+    .timeHead{align-items:center}
+    .timeHeadRight{display:flex;align-items:center;gap:7px}
+  }
+</style>
+
 </head>
 <body>
 
@@ -1524,8 +1543,21 @@ renderChips = function(){
 
 function buildTimeDock(){
   const dock=document.createElement("section");dock.id="timeDock";dock.setAttribute("aria-label","Forecast day selector");
-  dock.innerHTML='<div class="timeHead"><span class="timeTitle">Forecast timeline · 予報日</span><span class="timeStatus" id="timeStatus">Today · live observations</span></div><div class="dayRail" id="dayRail"></div>';
+  dock.innerHTML='<div class="timeHead"><span class="timeTitle">Forecast timeline · 予報日</span><span class="timeHeadRight"><button type="button" class="forecastLegendBtn" id="forecastLegendBtn" aria-expanded="false">Key · 凡例</button><span class="timeStatus" id="timeStatus">Today · live observations</span></span></div><div class="dayRail" id="dayRail"></div>';
   document.getElementById("wrap").appendChild(dock);
+  const sheet=document.createElement("aside");
+  sheet.id="forecastLegendSheet";
+  sheet.setAttribute("aria-hidden","true");
+  sheet.innerHTML='<div class="forecastLegendSheetHead"><span>Forecast key · 凡例</span><button type="button" class="forecastLegendClose" aria-label="Close legend">×</button></div><div class="forecastLegendContent"></div>';
+  document.getElementById("wrap").appendChild(sheet);
+  const legendBtn=dock.querySelector("#forecastLegendBtn");
+  const closeLegend=()=>{sheet.classList.remove("open");sheet.setAttribute("aria-hidden","true");legendBtn.setAttribute("aria-expanded","false");};
+  legendBtn.addEventListener("click",()=>{
+    if(!sheet.classList.contains("open") && legendDiv) sheet.querySelector(".forecastLegendContent").innerHTML=legendDiv.innerHTML;
+    const opening=!sheet.classList.contains("open");
+    sheet.classList.toggle("open",opening);sheet.setAttribute("aria-hidden",String(!opening));legendBtn.setAttribute("aria-expanded",String(opening));
+  });
+  sheet.querySelector(".forecastLegendClose").addEventListener("click",closeLegend);
   const rail=dock.querySelector("#dayRail");
   const now=new Date();
   for(let i=0;i<7;i++){
@@ -1573,7 +1605,9 @@ function updateForecastDockClearance(){
 function syncForecastDock(){
   const dock=document.getElementById('timeDock');
   if (!dock) return;
-  dock.style.display = activeMode && activeMode.id==='forecast' ? 'block' : 'none';
+  const show=activeMode && activeMode.id==='forecast';
+  dock.style.display = show ? 'block' : 'none';
+  if(!show){const sheet=document.getElementById('forecastLegendSheet');if(sheet){sheet.classList.remove('open');sheet.setAttribute('aria-hidden','true');}const btn=document.getElementById('forecastLegendBtn');if(btn)btn.setAttribute('aria-expanded','false');}
   updateForecastDockClearance();
 }
 function selectForecastDay(i,b){
@@ -1583,6 +1617,8 @@ function selectForecastDay(i,b){
   document.getElementById('timeStatus').textContent=label;
   renderChips();
   updateLegend();
+  const sheet=document.getElementById('forecastLegendSheet');
+  if(sheet && sheet.classList.contains('open') && legendDiv) sheet.querySelector('.forecastLegendContent').innerHTML=legendDiv.innerHTML;
 }
 
 function extreme(kind){
