@@ -343,6 +343,34 @@
   @media(max-width:420px){.dayRail button:nth-child(n+6){display:none}.dayRail{grid-template-columns:repeat(5,1fr)}}
 </style>
 
+
+<style id="forecast-dock-collision-fix">
+  :root{--forecast-dock-clearance:0px}
+  /* The Leaflet legend and forecast rail must never occupy the same bottom zone. */
+  body.forecast-dock-open .legend{
+    bottom:calc(var(--forecast-dock-clearance) + 8px)!important;
+    transition:bottom .22s ease, max-height .22s ease, padding .22s ease;
+  }
+  @media(max-width:640px){
+    #timeDock{bottom:calc(8px + env(safe-area-inset-bottom));}
+    body.forecast-dock-open .legend{
+      left:8px!important;right:8px!important;
+      bottom:calc(var(--forecast-dock-clearance) + 8px)!important;
+      max-height:min(34vh,260px);
+    }
+    body.forecast-dock-open .legend.collapsed{
+      width:auto;max-height:none;overflow:hidden;padding:8px 12px;
+      border-radius:12px;
+    }
+    body.forecast-dock-open .legend.collapsed .grab{
+      margin:0;padding:0;border-bottom:0;justify-content:center;
+    }
+    body.forecast-dock-open .legend.collapsed .grab::after{
+      content:" — tap to show forecast legend";
+    }
+  }
+</style>
+
 </head>
 <body>
 
@@ -1505,11 +1533,48 @@ function buildTimeDock(){
     b.innerHTML='<strong>'+(i===0?'Today':d.toLocaleDateString('en-GB',{weekday:'short',timeZone:'Asia/Tokyo'}))+'</strong><small>'+d.toLocaleDateString('en-GB',{day:'numeric',month:'short',timeZone:'Asia/Tokyo'})+'</small>';
     if(i===0)b.classList.add("active");b.addEventListener("click",()=>selectForecastDay(i,b));rail.appendChild(b);
   }
+  observeForecastDock();
+}
+let forecastDockResizeObserver=null;
+function observeForecastDock(){
+  const dock=document.getElementById('timeDock');
+  if(!dock || forecastDockResizeObserver) return;
+  if('ResizeObserver' in window){
+    forecastDockResizeObserver=new ResizeObserver(()=>updateForecastDockClearance());
+    forecastDockResizeObserver.observe(dock);
+  }
+  window.addEventListener('resize', updateForecastDockClearance, {passive:true});
+  window.addEventListener('orientationchange', ()=>setTimeout(updateForecastDockClearance,120), {passive:true});
+}
+function updateForecastDockClearance(){
+  const dock=document.getElementById('timeDock');
+  if (!dock) return;
+  const open=activeMode && activeMode.id==='forecast' && dock.style.display!=='none';
+  document.body.classList.toggle('forecast-dock-open', !!open);
+  if(open){
+    requestAnimationFrame(()=>{
+      const rect=dock.getBoundingClientRect();
+      // Distance from the viewport bottom to the dock's top, plus a visual gap.
+      const clearance=Math.max(0, window.innerHeight-rect.top+8);
+      document.documentElement.style.setProperty('--forecast-dock-clearance', clearance+'px');
+      if(window.innerWidth<=640 && legendDiv && !legendDiv.dataset.forecastAutoCollapsed){
+        legendDiv.classList.add('collapsed');
+        legendDiv.dataset.forecastAutoCollapsed='1';
+      }
+    });
+  }else{
+    document.documentElement.style.setProperty('--forecast-dock-clearance','0px');
+    if(legendDiv && legendDiv.dataset.forecastAutoCollapsed){
+      legendDiv.classList.remove('collapsed');
+      delete legendDiv.dataset.forecastAutoCollapsed;
+    }
+  }
 }
 function syncForecastDock(){
   const dock=document.getElementById('timeDock');
   if (!dock) return;
   dock.style.display = activeMode && activeMode.id==='forecast' ? 'block' : 'none';
+  updateForecastDockClearance();
 }
 function selectForecastDay(i,b){
   selectedForecastDay=i;document.querySelectorAll('#dayRail button').forEach(x=>x.classList.toggle('active',x===b));
