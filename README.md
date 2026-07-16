@@ -22,6 +22,15 @@ a static, no-build package that runs from a local `file://` open or any static w
   - **Rain 24h 降水量** — station totals in explicit mm range bands.
   - **Snow 積雪** — snow depth in cm range bands (empty in summer, and says so).
   - **Pressure 気圧** — full-domain isobars (surface-chart style) with 低/高 centres.
+- **Rain radar overlay 雨雲** — JMA's high-resolution precipitation nowcast as an
+  animated layer over any view: past hour observed + next hour nowcast in 5-minute
+  frames, with a play/scrub dock. Forecast frames are labelled as forecast — the
+  dock says *Observed* or *Forecast* on every frame, never blends the two.
+- **Satellite overlay 衛星赤外** — Himawari Band-13 infrared, two tile sets layered:
+  full-disk covers the whole hemisphere (Philippine Sea, South China Sea — the typhoon
+  corridor, 10-minute cadence, native zoom 5) and a sharper Japan-area set sits on top
+  (2.5-minute cadence, native zoom 6). Each layer's frame time is shown separately in
+  the legend; the visible crop edge over Japan is the jp tile boundary, not missing data.
 - **Typhoon overlay 台風情報** — observed + forecast track, 予報円 probability
   circles, gale area, and per-point pressure/wind. Appears only when a storm is active.
 - **天気図 Charts** — JMA's official surface analysis + 24/48 h prognostic charts,
@@ -122,3 +131,49 @@ spring and autumn with:
 - Forecast mode no longer places the full Leaflet legend above the timeline on narrow screens.
 - A compact `Key · 凡例` control in the forecast dock opens a separate, dismissible legend sheet.
 - The sheet refreshes when the selected forecast day changes and closes automatically when leaving Forecast mode.
+
+### v4.4 radar & satellite overlays
+- Two new overlay toggles beside the typhoon button: **Radar 雨雲** and **Satellite 衛星赤外**.
+  Overlays, not modes — they draw on top of whichever view is active.
+- Radar: JMA high-resolution nowcast (`bosai/jmatile` hrpns) with an animation dock —
+  play/pause, a frame slider spanning −1 h observed to +1 h nowcast, and a status
+  label that marks every frame *Observed* or *Forecast* (amber). Flicker-free
+  animation via persistent opacity-switched tile layers (the Hong Kong Atlas pattern),
+  `maxNativeZoom: 10` set explicitly.
+- Satellite: Himawari Band-13 infrared, Japan-area tiles (`bosai/himawari` `jp`
+  region — higher resolution and faster cadence than full-disk). `maxNativeZoom: 6`
+  set explicitly: tiles 404 beyond that, and past native zoom the image is upscaled,
+  not sharper — the legend says so.
+- Legend gains per-overlay notes: the standard JMA mm/h intensity scale for radar,
+  an IR brightness-temperature explanation for satellite, per-source frame times in JST.
+- The radar dock stacks above the forecast timeline when both are open; the legend
+  clears both. Feed failures surface in the dock and legend — never silently.
+- `scripts/check_feeds.js` now probes both time indexes **and one live tile each**
+  (a healthy index with dead tiles still fails the daily check).
+
+### v4.4.1 hemisphere satellite coverage + TD label fix
+- Satellite overlay now layers Himawari **full-disk** tiles under the Japan-area set,
+  so infrared coverage extends across the whole hemisphere instead of stopping at the
+  jp crop boundary. Per-layer frame times (fd 10-min, jp 2.5-min) in the legend.
+- Fixed `台風NaN号`: JMA lists tropical depressions before numbering with a placeholder
+  `typhoonNumber` (e.g. `"a"`), which parsed to NaN. Unnumbered systems are now
+  labelled 熱帯低気圧 TD.
+- Feed check gains a full-disk index + live-tile probe.
+
+### v4.4.2 satellite bounds + radar loading state (user edits)
+- `noWrap` on all overlay tile layers; the Japan-area satellite layer is bounded so its
+  no-data edge tiles no longer mask the full-disk image beneath.
+- The radar play button shows a disabled loading state while frames fetch, and a play
+  press during loading is queued instead of dropped. Play restarts from the beginning
+  when already at the last frame.
+
+### v4.4.3 flicker-free animation + empty-vs-broken radar signal
+- Radar animation now uses a **double buffer**: exactly two tile layers — the next frame
+  loads invisibly and swaps in on its `load` event (with a stall-safety timeout), so
+  frames never flash blank (the v4.4.2 single-layer `setUrl` redraw could) and panning
+  never triggers requests for two dozen frames (the v4.4 pool did).
+- The dock now answers "is it empty or is it broken?" directly, via Leaflet tile events
+  (the tiles themselves are CORS-opaque, so pixels can't be read):
+  tiles loaded fine → *"Layer live — a blank map means no precipitation echo, not a
+  failure"*; tiles erroring → *"⚠ N tiles failed — coverage may be incomplete"*.
+  The legend states the same rule. A dry day and a dead feed no longer look identical.

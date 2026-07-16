@@ -5,6 +5,7 @@
      - Amedas latest_time, the map snapshot for that time, and the station table
      - typhoon target list
      - weather-map (天気図) index
+     - radar nowcast (hrpns) time indexes + a live tile, Himawari IR jp index + a live tile
      - Open-Meteo JMA model pressure endpoint
      - Disaster Atlas: quake list, warning file, tsunami list,
        volcano registry + warnings, USGS FDSN history endpoint
@@ -72,6 +73,43 @@ async function probe(name, url, validate){
   checks.push(probe("weather-map index",
     "https://www.jma.go.jp/bosai/weather_map/data/list.json",
     async r => { const d = await r.json(); return (d.near && d.near.now && d.near.now.length) ? null : "index shape changed"; }));
+
+  // Radar (hrpns nowcast) and satellite (Himawari IR) overlay feeds:
+  // validate the time index shape, then fetch one real tile from the newest
+  // frame — a healthy index with dead tiles must still fail the check.
+  checks.push((async () => {
+    const a = await probe("radar nowcast targetTimes N1",
+      "https://www.jma.go.jp/bosai/jmatile/data/nowc/targetTimes_N1.json",
+      async r => { const d = await r.json(); return (Array.isArray(d) && d[0] && d[0].basetime) ? null : "index shape changed"; });
+    if (!a.ok) return a;
+    const d = await (await fetch("https://www.jma.go.jp/bosai/jmatile/data/nowc/targetTimes_N1.json")).json();
+    const f = d[0]; // newest-first
+    return probe("radar nowcast tile (z5 Japan)",
+      "https://www.jma.go.jp/bosai/jmatile/data/nowc/" + f.basetime + "/none/" + f.validtime + "/surf/hrpns/5/28/12.png");
+  })());
+  checks.push(probe("radar nowcast targetTimes N2 (forecast)",
+    "https://www.jma.go.jp/bosai/jmatile/data/nowc/targetTimes_N2.json",
+    async r => { const d = await r.json(); return (Array.isArray(d) && d[0] && d[0].basetime) ? null : "index shape changed"; }));
+  checks.push((async () => {
+    const a = await probe("himawari targetTimes jp",
+      "https://www.jma.go.jp/bosai/himawari/data/satimg/targetTimes_jp.json",
+      async r => { const d = await r.json(); return (Array.isArray(d) && d.length && d[d.length-1].basetime) ? null : "index shape changed"; });
+    if (!a.ok) return a;
+    const d = await (await fetch("https://www.jma.go.jp/bosai/himawari/data/satimg/targetTimes_jp.json")).json();
+    const f = d[d.length - 1]; // oldest-first
+    return probe("himawari IR tile jp (z5 Japan)",
+      "https://www.jma.go.jp/bosai/himawari/data/satimg/" + f.basetime + "/jp/" + f.validtime + "/B13/TBB/5/28/12.jpg");
+  })());
+  checks.push((async () => {
+    const a = await probe("himawari targetTimes fd",
+      "https://www.jma.go.jp/bosai/himawari/data/satimg/targetTimes_fd.json",
+      async r => { const d = await r.json(); return (Array.isArray(d) && d.length && d[d.length-1].basetime) ? null : "index shape changed"; });
+    if (!a.ok) return a;
+    const d = await (await fetch("https://www.jma.go.jp/bosai/himawari/data/satimg/targetTimes_fd.json")).json();
+    const f = d[d.length - 1]; // oldest-first
+    return probe("himawari IR tile fd (z4 wide region)",
+      "https://www.jma.go.jp/bosai/himawari/data/satimg/" + f.basetime + "/fd/" + f.validtime + "/B13/TBB/4/13/7.jpg");
+  })());
 
   checks.push(probe("open-meteo JMA pressure",
     "https://api.open-meteo.com/v1/jma?latitude=35&longitude=139&current=pressure_msl",

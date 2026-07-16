@@ -390,6 +390,35 @@
   }
 </style>
 
+<style id="radar-satellite-layers">
+  :root{--radar-dock-clearance:0px}
+  /* Radar scrubber dock — stacks above the forecast rail when both are open. */
+  #radarDock{display:none;position:absolute;left:50%;bottom:calc(18px + var(--forecast-dock-clearance));transform:translateX(-50%);z-index:1001;
+    width:min(560px,calc(100% - 36px));background:rgba(255,255,255,.95);border:1px solid rgba(16,42,67,.12);
+    border-radius:16px;padding:9px 12px;box-shadow:0 14px 38px rgba(15,39,64,.2);backdrop-filter:blur(14px);
+    transition:bottom .22s ease}
+  #radarDock .rHead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px}
+  #radarDock .rTitle{font-size:.68rem;font-weight:700;letter-spacing:.12em;color:#617184;text-transform:uppercase}
+  #radarDock .rStatus{font-size:.74rem;font-weight:700;color:#173a57;white-space:nowrap}
+  #radarDock .rStatus.fcst{color:#a15a00}
+  #radarDock .rRow{display:flex;align-items:center;gap:10px}
+  #radarDock .rPlay{flex:none;width:34px;height:34px;border:0;border-radius:50%;cursor:pointer;font-size:1rem;
+    background:linear-gradient(145deg,#183b56,#102a43);color:#fff;box-shadow:0 5px 12px rgba(16,42,67,.2)}
+  #radarDock .rPlay:focus-visible{outline:2px solid var(--indigo);outline-offset:1px}
+  #radarDock .rPlay:disabled{cursor:wait;opacity:.48;box-shadow:none}
+  #radarDock input[type=range]{flex:1;accent-color:#183b56;min-width:0}
+  #radarDock .rNote{font-size:.62rem;color:#6b7a8b;margin-top:5px}
+  body.radar-dock-open .legend{bottom:calc(var(--radar-dock-clearance) + 8px)!important;
+    transition:bottom .22s ease, max-height .22s ease, padding .22s ease}
+  #modebar button.ovl.active{background:linear-gradient(145deg,#1c4968,#0d253d);color:#fff}
+  #modebar button.ovl.active .mj{color:rgba(255,255,255,.75)}
+  @media(max-width:640px){
+    #radarDock{bottom:calc(8px + env(safe-area-inset-bottom) + var(--forecast-dock-clearance));width:calc(100% - 16px);padding:8px 10px}
+    body.radar-dock-open .legend{left:8px!important;right:8px!important;
+      bottom:calc(var(--radar-dock-clearance) + 8px)!important;max-height:min(34vh,260px)}
+  }
+</style>
+
 </head>
 <body>
 
@@ -610,8 +639,20 @@ modeForecast.addTo(map);
     def.btn = b;
     bar.appendChild(b);
   }
-  // typhoon toggle — independent of the mode, drawn on top of any view
+  // overlays — independent of the mode, drawn on top of any view
   const sep = document.createElement("span"); sep.className = "sep"; bar.appendChild(sep);
+  const rb = document.createElement("button");
+  rb.type = "button"; rb.id = "radarBtn"; rb.className = "ovl";
+  rb.setAttribute("aria-pressed","false");
+  rb.innerHTML = '<span class="mi">🌧️</span><span class="me">Radar</span><span class="mj">雨雲</span>';
+  rb.addEventListener("click", toggleRadar);
+  bar.appendChild(rb);
+  const sb = document.createElement("button");
+  sb.type = "button"; sb.id = "satBtn"; sb.className = "ovl";
+  sb.setAttribute("aria-pressed","false");
+  sb.innerHTML = '<span class="mi">🛰️</span><span class="me">Satellite</span><span class="mj">衛星赤外</span>';
+  sb.addEventListener("click", toggleSatellite);
+  bar.appendChild(sb);
   const tb = document.createElement("button");
   tb.type = "button"; tb.id = "tyBtn"; tb.className = "ty active";
   tb.style.display = "none";
@@ -682,7 +723,11 @@ function drawTyphoon(fc, sp){
   const title = fc[0];
   const num = parseInt(String(title.typhoonNumber).slice(2), 10);
   const nameEn = (title.name && title.name.en) || "";
-  const label = "台風" + num + "号 " + nameEn;
+  // JMA lists tropical depressions before numbering (typhoonNumber is a
+  // placeholder like "a") — label them honestly instead of "台風NaN号".
+  const label = isNaN(num)
+    ? ("熱帯低気圧 TD" + (nameEn ? " " + nameEn : ""))
+    : ("台風" + num + "号 " + nameEn);
   activeTyphoons.push({label});
 
   const specByH = {};
@@ -942,6 +987,29 @@ function updateLegend(){
       + '(70% chance the centre passes inside) · amber ring: current gale area 強風域. '
       + 'Tap any point for pressure &amp; winds.</span>';
   }
+  if (typeof radarOn !== "undefined" && radarOn){
+    const RADAR_BANDS = [
+      ["#B3E5FF","1–5"],["#218CFF","5–10"],["#0041FF","10–20"],["#FAF500","20–30"],
+      ["#FF9900","30–50"],["#FF2800","50–80"],["#B40068","80+"]
+    ];
+    legendDiv.innerHTML += '<span class="note" style="border-top:1px dashed var(--line);padding-top:4px;margin-top:6px">🌧️ <b>Rain radar 雨雲</b> (mm/h): '
+      + RADAR_BANDS.map(b => '<span class="sw" style="background:'+b[0]+';width:9px;height:9px;display:inline-block;border-radius:2px;margin:0 2px 0 4px;vertical-align:middle"></span>'+b[1]).join("")
+      + '<br>JMA high-resolution nowcast, 5-min frames. '
+      + (radarError ? radarError
+         : 'Slider spans the past hour (observed) and the next hour (nowcast <i>forecast</i> — model output, clearly labelled in the dock). A blank map with a live frame time = no precipitation echo anywhere in view (common on dry days), not a failure — the dock says which. Detail is native to zoom 10.')
+      + '</span>';
+  }
+  if (typeof satOn !== "undefined" && satOn){
+    legendDiv.innerHTML += '<span class="note" style="border-top:1px dashed var(--line);padding-top:4px;margin-top:6px">🛰️ <b>Satellite infrared 衛星赤外</b><br>'
+      + (satError ? satError
+         : 'Himawari Band-13 brightness temperature: whiter = colder, higher cloud tops (deep convection); dark = clear or low cloud. '
+           + 'Two tile sets layered: full-disk covers the whole hemisphere'
+           + (satTimeFd ? ' (frame ' + jstHHMM(satTimeFd) + ' JST, 10-min cadence)' : '')
+           + (satTimeJp ? '; a sharper Japan-area set sits on top (frame ' + jstHHMM(satTimeJp) + ' JST, 2.5-min cadence) — its crop boundary is the visible edge over Japan.'
+                        : '; the sharper Japan-area set is currently unavailable, so Japan shows full-disk detail only.')
+           + ' Detail is native to zoom 5 (full-disk) / 6 (Japan) — beyond that the image is upscaled, not sharper.')
+      + '</span>';
+  }
 }
 
 /* chip tiering: majors always; the rest appear from zoom 7 */
@@ -986,6 +1054,8 @@ async function loadAll(){
   chartData = null;              // charts refetch next time the viewer opens
   modelField = null;             // pressure field refetches on next draw
   jobs.push(loadTyphoons());
+  if (typeof radarOn !== "undefined" && radarOn) jobs.push(loadRadarFrames());
+  if (typeof satOn !== "undefined" && satOn) jobs.push(loadSatellite());
 
   jobs.push((async () => {
     const t = (await (await fetch(JMA + "/amedas/data/latest_time.txt")).text()).trim();
@@ -1601,6 +1671,9 @@ function updateForecastDockClearance(){
       delete legendDiv.dataset.forecastAutoCollapsed;
     }
   }
+  // the radar dock stacks above this one, so its clearance must follow
+  if (typeof updateRadarDockClearance === 'function')
+    requestAnimationFrame(() => updateRadarDockClearance());
 }
 function syncForecastDock(){
   const dock=document.getElementById('timeDock');
@@ -1661,6 +1734,265 @@ function closeOverview(){document.getElementById('overviewBox').classList.remove
   document.addEventListener('keydown',e=>{if(e.key==='Escape')closeOverview();});
 })();
 
+
+/* ================= radar 雨雲 & satellite 衛星 overlays =================
+ * Both are official JMA tile products, same bosai family as every other feed:
+ *  - Radar: high-resolution precipitation nowcast (hrpns), 5-min cadence,
+ *    observed frames (N1) + nowcast forecast frames (N2, +1 h). Native z10.
+ *  - Satellite: Himawari Band-13 infrared, Japan-area tiles, ~2.5-min cadence.
+ *    Native z6 — tiles 404 beyond that, so maxNativeZoom is set explicitly
+ *    (the RainViewer placeholder-tile lesson: never trust tiles past native zoom).
+ */
+const JST_OFF = 9 * 3600000;
+function jmaTimeToDate(s){ // "20260715013000" (UTC) -> Date
+  return new Date(Date.UTC(+s.slice(0,4), +s.slice(4,6)-1, +s.slice(6,8), +s.slice(8,10), +s.slice(10,12), +s.slice(12,14)));
+}
+function jstHHMM(d){ const j = new Date(d.getTime() + JST_OFF); return String(j.getUTCHours()).padStart(2,"0") + ":" + String(j.getUTCMinutes()).padStart(2,"0"); }
+
+/* ---------- satellite: Himawari IR, two tile sets layered ----------
+ * fd (full-disk): whole hemisphere, 10-min cadence, native z5 — the wide view.
+ * jp (Japan area): cropped polygon, 2.5-min cadence, native z6 — sharper,
+ * drawn on top of fd so Japan gets the better product and everywhere else
+ * still has coverage. Each keeps its own frame time (per-source honesty). */
+let satOn = false, satLayerFd = null, satLayerJp = null,
+    satTimeFd = null, satTimeJp = null, satError = "";
+async function loadSatellite(){
+  try{
+    const [tFd, tJp] = await Promise.all([
+      fetch(JMA + "/himawari/data/satimg/targetTimes_fd.json").then(r => r.json()),
+      fetch(JMA + "/himawari/data/satimg/targetTimes_jp.json").then(r => r.json()).catch(() => null)
+    ]);
+    const fd = tFd[tFd.length - 1];                        // lists are oldest-first
+    // Keep the full-disk layer underneath at every zoom.  The Japan-area
+    // product is sharper but has a tighter footprint; bounding it prevents
+    // its no-data edge tiles from masking the wider Himawari image.
+    const nextFd = L.tileLayer(
+      JMA + "/himawari/data/satimg/" + fd.basetime + "/fd/" + fd.validtime + "/B13/TBB/{z}/{x}/{y}.jpg",
+      {opacity:.62, maxNativeZoom:5, maxZoom:12, noWrap:true, attribution:"Himawari IR · JMA"});
+    let nextJp = null;
+    if (tJp && tJp.length){
+      const jp = tJp[tJp.length - 1];
+      nextJp = L.tileLayer(
+        JMA + "/himawari/data/satimg/" + jp.basetime + "/jp/" + jp.validtime + "/B13/TBB/{z}/{x}/{y}.jpg",
+        {opacity:.62, maxNativeZoom:6, maxZoom:12, noWrap:true,
+         bounds:[[15,112],[55,165]], attribution:"Himawari IR · JMA"});
+      satTimeJp = jmaTimeToDate(jp.basetime);
+    } else satTimeJp = null;
+    if (satOn){ nextFd.addTo(map); if (nextJp) nextJp.addTo(map); }  // fd first, jp on top
+    if (satLayerFd) map.removeLayer(satLayerFd);
+    if (satLayerJp) map.removeLayer(satLayerJp);
+    satLayerFd = nextFd; satLayerJp = nextJp;
+    satTimeFd = jmaTimeToDate(fd.basetime);
+    satError = "";
+  }catch(e){
+    satError = "Himawari feed unavailable — press Refresh to retry.";
+    satTimeFd = satTimeJp = null;
+  }
+  updateLegend();
+}
+function toggleSatellite(){
+  satOn = !satOn;
+  const b = document.getElementById("satBtn");
+  b.classList.toggle("active", satOn);
+  b.setAttribute("aria-pressed", String(satOn));
+  if (satOn){
+    if (satLayerFd){ satLayerFd.addTo(map); if (satLayerJp) satLayerJp.addTo(map); }
+    else loadSatellite();
+  } else {
+    if (satLayerFd) map.removeLayer(satLayerFd);
+    if (satLayerJp) map.removeLayer(satLayerJp);
+  }
+  updateLegend();
+}
+
+/* ---------- radar: explicitly refreshed frame layer + scrubber ---------- */
+let radarOn = false, radarFrames = [], radarIdx = -1, radarPlaying = false,
+    radarLoading = false, radarPlayQueued = false, radarTimer = null, radarError = "";
+let radarFront = null, radarBack = null;   // double buffer: next frame loads hidden, swaps in when ready
+let radarTileErrors = 0, radarTilesEverLoaded = false;
+
+async function loadRadarFrames(){
+  stopRadarPlay();
+  radarLoading = true;
+  setRadarPlayState();
+  try{
+    const [n1, n2] = await Promise.all([
+      fetch(JMA + "/jmatile/data/nowc/targetTimes_N1.json").then(r => r.json()),
+      fetch(JMA + "/jmatile/data/nowc/targetTimes_N2.json").then(r => r.json()).catch(() => [])
+    ]);
+    // N1: observed, newest-first -> take last hour (12 frames), oldest-first
+    const obs = n1.slice(0, 12).reverse().map(t => ({b:t.basetime, v:t.validtime, fcst:false}));
+    // N2: forecast frames for the newest basetime, ascending validtime, +1 h
+    const nb = n2.length ? n2[0].basetime : null;
+    const fcst = nb ? n2.filter(t => t.basetime === nb)
+                        .sort((a,b) => a.validtime.localeCompare(b.validtime))
+                        .slice(0, 12).map(t => ({b:t.basetime, v:t.validtime, fcst:true})) : [];
+    radarFrames = obs.concat(fcst);
+    if (!radarFrames.length) throw new Error("no frames");
+    radarError = "";
+    // A fresh feed invalidates the previous tile URLs — drop both buffers and
+    // the tile-health counters so the new frame set starts clean.
+    if (radarFront){ map.removeLayer(radarFront); radarFront = null; }
+    if (radarBack){ map.removeLayer(radarBack); radarBack = null; }
+    radarTileErrors = 0; radarTilesEverLoaded = false;
+    radarIdx = obs.length - 1;                 // default: latest observed frame
+    buildRadarSlider();
+    if (radarOn) showRadarFrame(radarIdx);
+    if (radarPlayQueued && radarOn) startRadarPlay();
+  }catch(e){
+    radarFrames = []; radarIdx = -1;
+    radarError = "Radar feed unavailable — press Refresh to retry.";
+    const st = document.getElementById("radarStatus");
+    if (st){ st.textContent = "Feed unavailable"; st.classList.remove("fcst"); }
+  }
+  radarLoading = false;
+  setRadarPlayState();
+  updateLegend();
+}
+function mkRadarLayer(url, op){
+  const l = L.tileLayer(url, {opacity:op, maxNativeZoom:10, maxZoom:12,
+    noWrap:true, attribution:"雨雲 Nowcast · JMA"});
+  // Tile events are the honest "empty or broken?" signal: tiles that loaded
+  // fine but show nothing = no precipitation echo; tile errors = a real problem.
+  l.on("tileerror", () => { radarTileErrors++; updateRadarHealth(); });
+  l.on("load", () => { radarTilesEverLoaded = true; updateRadarHealth(); });
+  return l;
+}
+function updateRadarHealth(){
+  const el = document.getElementById("radarHealth");
+  if (!el) return;
+  if (radarTileErrors > 0){
+    el.innerHTML = ' <b style="color:#a3341f">⚠ ' + radarTileErrors
+      + ' tile' + (radarTileErrors === 1 ? "" : "s") + ' failed — coverage may be incomplete.</b>';
+  } else if (radarTilesEverLoaded){
+    el.textContent = " Layer live — a blank map means no precipitation echo, not a failure.";
+  } else el.textContent = "";
+}
+function showRadarFrame(i){
+  if (!radarFrames.length) return;
+  radarIdx = Math.max(0, Math.min(i, radarFrames.length - 1));
+  const f = radarFrames[radarIdx];
+  const url = JMA + "/jmatile/data/nowc/" + f.b + "/none/" + f.v + "/surf/hrpns/{z}/{x}/{y}.png";
+  if (!radarFront){
+    radarFront = mkRadarLayer(url, .72).addTo(map);
+  } else {
+    // Double buffer: the new frame loads invisibly behind the current one and
+    // swaps in only when its tiles are ready — no blank flash between frames.
+    if (radarBack) map.removeLayer(radarBack);          // superseded mid-load
+    const back = mkRadarLayer(url, 0).addTo(map);
+    radarBack = back;
+    const swap = () => {
+      if (radarBack !== back) return;                   // a newer frame overtook this one
+      back.setOpacity(.72);
+      if (radarFront) map.removeLayer(radarFront);
+      radarFront = back; radarBack = null;
+    };
+    const stall = setTimeout(swap, 1500);               // never leave a frame stuck hidden
+    back.once("load", () => { clearTimeout(stall); swap(); });
+  }
+  const sl = document.getElementById("radarSlider");
+  if (sl) sl.value = radarIdx;
+  const st = document.getElementById("radarStatus");
+  if (st){
+    const d = jmaTimeToDate(f.v);
+    st.textContent = (f.fcst ? "Forecast · " : "Observed · ") + jstHHMM(d) + " JST";
+    st.classList.toggle("fcst", f.fcst);
+  }
+}
+function stopRadarPlay(){
+  radarPlaying = false;
+  if (radarTimer){ clearTimeout(radarTimer); radarTimer = null; }
+  setRadarPlayState();
+}
+function setRadarPlayState(){
+  const p = document.getElementById("radarPlay");
+  if (!p) return;
+  p.disabled = radarLoading;
+  p.textContent = radarLoading ? "…" : (radarPlaying ? "⏸" : "▶");
+  p.setAttribute("aria-label", radarLoading ? "Loading radar frames" : (radarPlaying ? "Pause radar animation" : "Play radar animation"));
+}
+function stepRadarPlay(){
+  if (!radarPlaying) return;
+  const next = (radarIdx + 1) % radarFrames.length;
+  showRadarFrame(next);
+  const atEnd = next === radarFrames.length - 1;
+  radarTimer = setTimeout(stepRadarPlay, atEnd ? 1800 : 550);   // dwell on the last frame
+}
+function toggleRadarPlay(){
+  if (radarLoading){ radarPlayQueued = true; return; }
+  if (!radarFrames.length) return;
+  if (radarPlaying){ stopRadarPlay(); return; }
+  startRadarPlay();
+}
+function startRadarPlay(){
+  if (!radarFrames.length) return;
+  radarPlayQueued = false;
+  // Start from the beginning so a click always produces a visible timeline,
+  // rather than jumping straight from the latest observation into forecast.
+  if (radarIdx >= radarFrames.length - 1) showRadarFrame(0);
+  radarPlaying = true;
+  setRadarPlayState();
+  radarTimer = setTimeout(stepRadarPlay, 550);
+}
+function buildRadarDock(){
+  if (document.getElementById("radarDock")) return;
+  const dock = document.createElement("section");
+  dock.id = "radarDock";
+  dock.setAttribute("aria-label","Radar animation controls");
+  dock.innerHTML = '<div class="rHead"><span class="rTitle">Rain radar · 雨雲の動き</span><span class="rStatus" id="radarStatus">Loading…</span></div>'
+    + '<div class="rRow"><button type="button" class="rPlay" id="radarPlay" aria-label="Loading radar frames" disabled>…</button>'
+    + '<input type="range" id="radarSlider" min="0" max="0" value="0" step="1" aria-label="Radar frame"></div>'
+    + '<div class="rNote">Past hour observed + next hour JMA nowcast (5-min frames). Forecast frames are model output, not observation.<span id="radarHealth"></span></div>';
+  document.getElementById("wrap").appendChild(dock);
+  document.getElementById("radarPlay").addEventListener("click", toggleRadarPlay);
+  document.getElementById("radarSlider").addEventListener("input", function(){
+    stopRadarPlay();
+    showRadarFrame(+this.value);
+  });
+  setRadarPlayState();
+  if ("ResizeObserver" in window) new ResizeObserver(updateRadarDockClearance).observe(dock);
+}
+function buildRadarSlider(){
+  const sl = document.getElementById("radarSlider");
+  if (!sl) return;
+  sl.max = Math.max(0, radarFrames.length - 1);
+  sl.value = radarIdx;
+}
+function updateRadarDockClearance(){
+  const dock = document.getElementById("radarDock");
+  const open = radarOn && dock && dock.style.display !== "none";
+  document.body.classList.toggle("radar-dock-open", !!open);
+  if (open){
+    requestAnimationFrame(() => {
+      const rect = dock.getBoundingClientRect();
+      document.documentElement.style.setProperty("--radar-dock-clearance",
+        Math.max(0, window.innerHeight - rect.top + 8) + "px");
+    });
+  } else {
+    document.documentElement.style.setProperty("--radar-dock-clearance","0px");
+  }
+}
+function toggleRadar(){
+  radarOn = !radarOn;
+  const b = document.getElementById("radarBtn");
+  b.classList.toggle("active", radarOn);
+  b.setAttribute("aria-pressed", String(radarOn));
+  buildRadarDock();
+  const dock = document.getElementById("radarDock");
+  dock.style.display = radarOn ? "block" : "none";
+  if (radarOn){
+    if (radarFrames.length) showRadarFrame(radarIdx);
+    else loadRadarFrames();
+  } else {
+    stopRadarPlay();
+    if (radarFront){ map.removeLayer(radarFront); radarFront = null; }
+    if (radarBack){ map.removeLayer(radarBack); radarBack = null; }
+  }
+  updateRadarDockClearance();
+  updateLegend();
+}
+// keep the radar dock stacked correctly when the forecast dock opens/closes
+window.addEventListener("resize", updateRadarDockClearance, {passive:true});
 
 document.getElementById("refreshBtn").addEventListener("click", loadAll);
 updateLegend();
