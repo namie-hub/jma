@@ -1,0 +1,28 @@
+name: Phenology ingest
+
+on:
+  schedule:
+    - cron: "23 20 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Regenerate jma_phenology.js from JMA observation pages
+        run: python3 scripts/ingest_phenology.py
+      - name: Commit only if data changed
+        run: |
+          git add jma_phenology.js
+          if git diff --cached --quiet; then
+            echo "Phenology unchanged — no commit."
+            exit 0
+          fi
+          git config user.name "atlas-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git commit -m "Phenology update"
+          git push
