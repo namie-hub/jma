@@ -1,0 +1,14 @@
+name: Feed health check
+
+on:
+  schedule:
+    - cron: "35 21 * * *"
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate all JMA and disaster feeds
+        run: node scripts/check_feeds.js
