@@ -1,23 +1,29 @@
-# Japan Weather/Disaster Atlas — Batch 1 record
-# Generated: 2026-07-23 07:58 UTC
-# Changes: volcano event-feed coverage (info.json/eruption.json indicator),
-#   typhoon tap halos + pane discipline, feed-check retry logic,
-#   TC forecast archiver (script + workflow + seed archive).
-# archive/ is an Actions-owned append-only dataset; it will grow.
+# Japan Weather/Disaster Atlas — Batch 1 + Batch 2 record
+# Generated: 2026-07-23 11:54 UTC
+# Batch 1: volcano event-feed indicator; typhoon tap halos + pane discipline;
+#   feed-check retry; TC forecast archiver (+ seed).
+# Batch 2: HKO comparison track — ingest_hko_tctrack.py (proven HK code),
+#   update-hko-tctrack.yml (:09/:39 cron), hko_tctrack.js seed, blue dashed
+#   comparison overlay on the weather page. JMA dots win overlapping taps;
+#   missing hko_tctrack.js degrades silently to JMA-only.
+# Actions-owned generated files (will diverge): hko_tctrack.js, archive/*.
 #
 # sha256  path
 ca83629d9b85452af0fddc358d396c6fa4796bf6424951f7e967b41460e2411d  README.md
+83e2276faf7d0c0f9c49a9fe1baecc1b1b9a6061dfc07bb5d1c30074115b2cf0  hko_tctrack.js
 562b26a540b1e028b0f59890c151c4c02d3ec4ea6222f056fac0d995745cec81  index.html
 27e335a679dbdc27c23649236b258cb664bc24fee87f6384710a58ac40f3bdd0  ingest_typhoon_history.py
 08a940d3b1d8b5e9c0eacca5b13ca14fb3c916275ffdeda81a8c33322a4c125a  japan_disaster_jma.html
-ffc7e8bda25b488381d21a9b86b9e4dd4f141ae80d759086c55a4a014659fba3  japan_weather_jma.html
+7a5a1c6dbb017179da100ce083f88c8283d3953d3bb9d6c655d5f9b7072933c2  japan_weather_jma.html
 2d79e79f3bcb147f64ef682d5483662c88626b4ca01313af089f4e3a598c1158  jma_cities.js
 eb4521e4411f1fa82ce1e5875d12b9881ae0a38f4ccee90f5df78e6c7ec3cdb3  jma_phenology.js
 7712714e286aabda7917e85323f2f9230bec9427808e0e60b0465ddbcc19d828  jma_pressure.js
 92beaf5eaf5f902ef7f6146fc8f84990d0ba95c572b65f9ff7967dc2049d4f9a  jma_typhoon_history.js
 399146d28bfe73d0633e4f5271a98efd5fd27b323a25d19e49bdebab3d9a0320  github/workflows/archive-forecasts.yml
+50d9c2ff2ba69835fedcd702697018cca527291853e8f1cfc7ff7dd78e64b1e9  github/workflows/update-hko-tctrack.yml
 53e924293d43a134f49bb60086608701f9f3ce495f91d1968aa394a72d0c885e  scripts/archive_typhoon_forecasts.py
 e5ea35c8589093f7888e49f01b41b372cd43ac4b09bbd3e105d4dac0984383ae  scripts/check_feeds.js
+8958b0274cf6d664da59f2e5574ce805b879086ca90b5876455c1896fdcc7251  scripts/ingest_hko_tctrack.py
 6a1888e3b67f04d9a021117ca2f92951293bceeed45313394205fe82013e8519  scripts/ingest_phenology.py
 27e335a679dbdc27c23649236b258cb664bc24fee87f6384710a58ac40f3bdd0  scripts/ingest_typhoon_history.py
 eab416de6a8a9549b3188f695673fdbf005a769bba5e96a2545c46e055756b0d  archive/tc_TC2614.json
