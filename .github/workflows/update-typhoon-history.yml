@@ -1,0 +1,28 @@
+name: Typhoon history ingest
+
+on:
+  schedule:
+    - cron: "41 19 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Regenerate jma_typhoon_history.js from JMA best-track archive
+        run: python3 scripts/ingest_typhoon_history.py
+      - name: Commit only if data changed
+        run: |
+          git add jma_typhoon_history.js
+          if git diff --cached --quiet; then
+            echo "Typhoon history unchanged — no commit."
+            exit 0
+          fi
+          git config user.name "atlas-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git commit -m "Typhoon history update"
+          git push
