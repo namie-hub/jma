@@ -105,6 +105,14 @@
   .lhBadge.forming em{color:#C0392B}
   .lhBadge.high span{background:#24425F}
 
+  /* recent activity ring around a volcano triangle: amber pulse for
+     commentary, red pulse for 臨時/噴火速報 */
+  .volEvRing{position:absolute; left:50%; top:46%; width:26px; height:26px;
+    margin:-13px 0 0 -13px; border-radius:50%; border:2.5px solid #E3A63B;
+    animation:volPulse 1.6s ease-out infinite; pointer-events:none}
+  .volEvRing.urgent{border-color:#D64541}
+  @keyframes volPulse{0%{transform:scale(.55);opacity:.95}70%{transform:scale(1.25);opacity:.15}100%{transform:scale(1.35);opacity:0}}
+  .volMark{position:relative}
   /* volcano triangle */
   .volMark{font-size:16px;line-height:1;text-align:center;
     text-shadow:0 1px 2px #fff,0 -1px 2px #fff,1px 0 2px #fff,-1px 0 2px #fff;
@@ -397,6 +405,9 @@ let warnByOffice = {};         // office -> warning json
 let warnFailed = 0;
 let volcanoList = [];
 let volcanoWarn = [];
+let volcanoInfo = [];
+let volcanoEruption = [];
+let volcanoEventFeedDown = [];
 let tsunamiList = [];
 const historyCache = {};   // "years|mag" -> geojson features
 
@@ -599,10 +610,47 @@ function showWarnPanel(c, names, lv){
 
 /* ================= volcano 火山 ================= */
 async function loadVolcano(){
-  [volcanoList, volcanoWarn] = await Promise.all([
+  /* warning.json carries STANDING warning levels only. An eruption that
+   * does not change the level (Tokachidake, 22 Jul 2026: erupted, level
+   * kept at 2) leaves warning.json byte-identical — a feed not changing
+   * is not the same as nothing happening. Event-level products live in:
+   *   info.json     火山の状況に関する解説情報 (activity commentary)
+   *   eruption.json 噴火速報 (eruption notice, usually empty)
+   * Both CORS-open. Either failing must not take down the level display,
+   * hence the .catch(() => []) — but the popup says so honestly. */
+  const evFetch = f => fetch(JMA + "/volcano/data/" + f)
+    .then(r => { if(!r.ok) throw new Error(f); return r.json(); })
+    .catch(() => { volcanoEventFeedDown.push(f); return []; });
+  volcanoEventFeedDown = [];
+  [volcanoList, volcanoWarn, volcanoInfo, volcanoEruption] = await Promise.all([
     fetch(JMA + "/volcano/const/volcano_list.json").then(r => r.json()),
-    fetch(JMA + "/volcano/data/warning.json").then(r => r.json())
+    fetch(JMA + "/volcano/data/warning.json").then(r => r.json()),
+    evFetch("info.json"),
+    evFetch("eruption.json")
   ]);
+}
+
+/* Latest recent event-level report for a volcano code, or null.
+ * "Recent" uses JMA's own within120 flag (within 120 h) when present,
+ * else a 5-day reportDatetime window. 臨時 (extraordinary) commentary
+ * and anything in eruption.json outrank routine scheduled commentary. */
+function volcanoEvent(code){
+  const RECENT_MS = 120*3600*1000;
+  const recent = e => e.within120 === true ||
+    (e.reportDatetime && (Date.now() - new Date(e.reportDatetime)) < RECENT_MS);
+  let best = null;
+  const consider = (e, kind) => {
+    if ((e.eventId||"") !== code || !recent(e)) return;
+    const extraordinary = kind === "eruption" || (e.headTitle||"").includes("臨時");
+    const rank = kind === "eruption" ? 2 : (extraordinary ? 1 : 0);
+    if (!best || rank > best.rank ||
+        (rank === best.rank && e.reportDatetime > best.reportDatetime))
+      best = {kind, extraordinary, rank,
+              reportDatetime: e.reportDatetime, headTitle: e.headTitle||""};
+  };
+  for (const e of (volcanoInfo||[]))     consider(e, "info");
+  for (const e of (volcanoEruption||[])) consider(e, "eruption");
+  return best;
 }
 
 function volcanoStatus(code){
@@ -624,36 +672,54 @@ function volcanoStatus(code){
 
 function renderVolcano(){
   modeVolcano.clearLayers();
-  let active = 0;
+  let active = 0, recentEv = 0;
   for (const v of volcanoList){
     if (!Array.isArray(v.latlon) || v.latlon.length < 2) continue;  // admin entries (codes 900-902) carry no coordinates
     const st = volcanoStatus(v.code);
     const vc = st && VCODE[st.code];
     if (vc) active++;
+    const ev = volcanoEvent(v.code);
+    if (ev) recentEv++;
     const col = vc ? vc.c : "#8A94A0";
     const label = vc ? '<small style="color:#1E2A3A">'+esc(st.name)+"</small>" : "";
+    const ring = ev ? '<span class="volEvRing'+(ev.extraordinary?" urgent":"")+'"></span>' : "";
     const icon = L.divIcon({className:"", iconSize:null, iconAnchor:[9, 9],
-      html:'<div class="volMark" style="color:'+col+'">▲'+label+"</div>"});
+      html:'<div class="volMark" style="color:'+col+'">'+ring+'▲'+label+"</div>"});
     L.marker([parseFloat(v.latlon[0]), parseFloat(v.latlon[1])], {icon, zIndexOffset: vc?200:0})
       .on("click", () => {
         let html = '<dl class="kv"><dt>Volcano</dt><dd>'+esc(v.name_jp)+" / "+esc(v.name_en)+"</dd>";
         if (st){
           html += "<dt>Status</dt><dd>"+esc(st.name)+"</dd>"
                + "<dt>Meaning</dt><dd>"+esc(vc ? vc.en : "—")+"</dd>"
-               + "<dt>Since report</dt><dd>"+jstFmt(st.reportDatetime)+"</dd></dl>";
+               + "<dt>Since report</dt><dd>"+jstFmt(st.reportDatetime)+"</dd>";
         }else{
-          html += "<dt>Status</dt><dd>No active eruption warning</dd></dl>"
-               + '<p class="note">Not listed in the current 噴火警報 feed — treated as Level 1 / normal watchfulness (活火山であることに留意).</p>';
+          html += "<dt>Status</dt><dd>No active eruption warning</dd>";
         }
+        if (ev){
+          html += "<dt>Recent activity</dt><dd>"
+               + (ev.kind === "eruption" ? "噴火速報 Eruption Notice" :
+                  (ev.extraordinary ? "解説情報（臨時） Extraordinary activity commentary"
+                                    : "解説情報 Activity commentary"))
+               + " issued " + jstFmt(ev.reportDatetime) + "</dd>";
+        }
+        html += "</dl>";
+        if (ev)
+          html += '<p class="note">JMA issued an event-level report within the last 120 h. The warning level above is a separate product and may be unchanged — an eruption that stays within the current restrictions does not raise it.</p>';
+        if (!st)
+          html += '<p class="note">Not listed in the current 噴火警報 feed — treated as Level 1 / normal watchfulness (活火山であることに留意).</p>';
+        if (volcanoEventFeedDown.length)
+          html += '<p class="note">⚠ Event feed unavailable this refresh ('+esc(volcanoEventFeedDown.join(", "))+') — recent-activity indicators may be missing. Warning levels above are unaffected.</p>';
         html += shelterLink(parseFloat(v.latlon[0]), parseFloat(v.latlon[1]));
         openPanel(esc(v.name_jp)+'<br><small style="opacity:.8">'+esc(v.name_en)+"</small>", html);
       })
-      .bindTooltip(esc(v.name_jp)+(st ? " — "+esc(st.name) : ""), {direction:"top"})
+      .bindTooltip(esc(v.name_jp)+(st ? " — "+esc(st.name) : "")+(ev ? " · 活動情報あり" : ""), {direction:"top"})
       .addTo(modeVolcano);
   }
   if (curMode === "volcano"){
     document.getElementById("summary").textContent =
-      volcanoList.length + " monitored volcanoes · " + active + " under eruption warning/restriction";
+      volcanoList.length + " monitored volcanoes · " + active + " under eruption warning/restriction"
+      + (recentEv ? " · " + recentEv + " with activity report in last 120 h" : "")
+      + (volcanoEventFeedDown.length ? " · ⚠ event feed down" : "");
   }
 }
 

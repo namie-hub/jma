@@ -20,7 +20,7 @@ const regSrc = fs.readFileSync(path.join(__dirname, "..", "jma_cities.js"), "utf
 const CITIES = new Function(regSrc + "; return JMA_CITIES;")();
 
 const TIMEOUT_MS = 20000;
-async function probe(name, url, validate){
+async function probeOnce(name, url, validate){
   try{
     const ctl = new AbortController();
     const t = setTimeout(() => ctl.abort(), TIMEOUT_MS);
@@ -35,6 +35,21 @@ async function probe(name, url, validate){
   }catch(e){
     return {name, url, ok:false, why: e.name === "AbortError" ? "timeout" : e.message};
   }
+}
+
+/* One transient fetch hiccup once produced a false failure (and would have
+ * meant a false-alarm email from the scheduled run): retry twice with a
+ * pause before declaring a feed broken. A feed that fails three probes
+ * over ~20 s is genuinely worth waking someone up for. */
+async function probe(name, url, validate){
+  let last;
+  for (let attempt = 0; attempt < 3; attempt++){
+    if (attempt) await new Promise(res => setTimeout(res, 8000));
+    last = await probeOnce(name, url, validate);
+    if (last.ok) return last;
+  }
+  last.why += " (after 3 attempts)";
+  return last;
 }
 
 (async () => {

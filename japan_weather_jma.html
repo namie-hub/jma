@@ -602,6 +602,23 @@ const map = L.map("map").setView([37.5,137.0], 5);
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
   {maxZoom:12, attribution:"&copy; OpenStreetMap contributors"}).addTo(map);
 const canvas = L.canvas({padding:0.3});
+/* Typhoon tap architecture (lesson from the HK Atlas, verified on real
+ * devices there): each forecast point draws its probability circle AFTER
+ * earlier points' dots, so in one SVG the topmost element over a mid-track
+ * dot is usually a LATER point's circle — tapping dot N opened hour N+24's
+ * popup. And 9px dots are hopeless fingertip targets. Fix: dots live in a
+ * pane above the circles so a visible dot always wins the tap, and each
+ * dot gets an invisible 40px halo in a pane below everything, bound to the
+ * same popup, catching imprecise taps that would otherwise hit the circle
+ * or empty sea. SVG counts a filled region as a hit area even at
+ * fillOpacity 0, which is what makes the halos work. */
+map.createPane("tyHalos").style.zIndex = 399;
+map.createPane("tyDots").style.zIndex = 401;
+const tyHaloRenderer = L.svg({pane:"tyHalos"});
+const tyDotRenderer  = L.svg({pane:"tyDots"});
+const tyHalo = (latlng, pop) =>
+  L.circleMarker(latlng, {renderer:tyHaloRenderer, radius:20, stroke:false,
+    fill:true, fillOpacity:0}).bindPopup(pop).addTo(typhoonLayer);
 
 const chipMajor = L.layerGroup();
 const chipMinor = L.layerGroup();
@@ -778,6 +795,7 @@ function drawTyphoon(fc, sp){
       + '</div>';
 
     if (r.advancedHours === 0){
+      tyHalo(r.center, pop);
       L.marker(r.center, {icon:L.divIcon({className:"", html:'<div class="tyMark">🌀</div>',
         iconSize:null, iconAnchor:[12,12]})})
         .bindTooltip(label, {permanent:true, direction:"right", offset:[12,0], className:"tyTip"})
@@ -789,7 +807,8 @@ function drawTyphoon(fc, sp){
           weight:1.2, dashArray:"3,5", fillColor:"#C0533E", fillOpacity:0.05})
           .bindPopup(pop).addTo(typhoonLayer);
       }
-      L.circleMarker(r.center, {radius:4.5, color:"#fff", weight:1,
+      tyHalo(r.center, pop);
+      L.circleMarker(r.center, {renderer:tyDotRenderer, radius:4.5, color:"#fff", weight:1,
         fillColor:"#C0533E", fillOpacity:1}).bindPopup(pop).addTo(typhoonLayer);
     }
   }
