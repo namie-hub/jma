@@ -135,6 +135,17 @@
   #legend .sw{width:15px;height:15px;border-radius:4px;flex:none;border:1px solid rgba(20,35,55,.25)}
   #legend .note{display:block;color:#5A6570;font-size:.72rem;margin-top:6px}
 
+  /* minimized detail panel — header-only bar; station dots stay visible on the map */
+  #panel.min{bottom:auto;overflow:hidden}
+  #panel.min .pbody{display:none}
+  #panel.min .phead{cursor:pointer}
+  @media(max-width:640px){
+    #panel.min{inset:auto;top:auto;left:8px;right:8px;bottom:8px;width:auto;
+      border-radius:14px;border:1px solid rgba(16,42,67,.1);
+      box-shadow:0 8px 24px rgba(15,39,64,.25)}
+    #panel.min .phead h2{font-size:.95rem}
+  }
+
   /* side panel */
   #panel{width:var(--panel-w);max-width:88vw;background:#fff;border-left:1px solid var(--line);
     overflow-y:auto;display:none;flex-direction:column}
@@ -301,6 +312,7 @@
 
   <aside id="panel" aria-label="Detail panel">
     <div class="phead"><h2 id="pTitle">—</h2>
+      <button type="button" class="x" id="pMin" aria-label="Minimize panel" title="Collapse — keep readings on the map">–</button>
       <button type="button" class="x" id="pClose" aria-label="Close">×</button></div>
     <div class="pbody" id="pBody"></div>
   </aside>
@@ -457,12 +469,30 @@ function shelterLink(lat, lon){
 function openPanel(title, html){
   document.getElementById("pTitle").innerHTML = title;
   document.getElementById("pBody").innerHTML = html;
-  document.getElementById("panel").classList.add("open");
+  const p = document.getElementById("panel");
+  p.classList.remove("min");
+  document.getElementById("pMin").textContent = "–";
+  p.classList.add("open");
 }
 document.getElementById("pClose").onclick = () => {
   document.getElementById("panel").classList.remove("open");
   quakeDetail.clearLayers();
 };
+document.getElementById("pMin").onclick = e => {
+  e.stopPropagation();
+  const p = document.getElementById("panel");
+  const min = p.classList.toggle("min");
+  document.getElementById("pMin").textContent = min ? "▴" : "–";
+};
+// tapping the collapsed header bar restores the panel
+document.querySelector("#panel .phead").addEventListener("click", e => {
+  if (e.target.closest("button")) return;
+  const p = document.getElementById("panel");
+  if (p.classList.contains("min")){
+    p.classList.remove("min");
+    document.getElementById("pMin").textContent = "–";
+  }
+});
 
 /* ================= quakes 地震 ================= */
 async function loadQuakes(){
@@ -515,11 +545,16 @@ function renderQuakes(){
       .addTo(modeQuake);
   }
   const pend = document.getElementById("qPending");
-  if (curMode === "quake" && pendingQuakes.length){
-    const q = pendingQuakes[0];
-    const s = shindo(q.maxi), lbl = pendingLabel(q);
+  // Banner is reserved for 震度5弱+ flash reports, and shows the *strongest*
+  // pending event, not the newest — a fresh 震度3 aftershock must not mask a
+  // still-pending 震度6. Weaker pending reports appear in the summary line only.
+  const pRank = {"5-":1,"5+":2,"6-":3,"6+":4,"7":5};
+  const strong = pendingQuakes.filter(q => pRank[q.maxi])
+    .sort((a,b) => pRank[b.maxi] - pRank[a.maxi] || b.at.localeCompare(a.at))[0];
+  if (curMode === "quake" && strong){
+    const s = shindo(strong.maxi), lbl = pendingLabel(strong);
     pend.innerHTML = "◉ <b>震度速報 flash report " + lbl.time + "</b> — max intensity "
-      + (s ? '<span class="intBadge" style="background:'+s.c+';color:'+s.t+'">'+s.k+"</span>" : esc(q.maxi||"—"))
+      + (s ? '<span class="intBadge" style="background:'+s.c+';color:'+s.t+'">'+s.k+"</span>" : esc(strong.maxi||"—"))
       + " observed in " + esc(lbl.where)
       + '<br><small>Epicenter &amp; magnitude not yet published by JMA — marker will appear when the located report lands.</small>';
     pend.classList.remove("hidden");
@@ -559,10 +594,12 @@ async function showQuake(q){
     const obs = d.Body && d.Body.Intensity && d.Body.Intensity.Observation;
     const cmt = d.Body && d.Body.Comments && d.Body.Comments.ForecastComment;
     let rows = "", n = 0;
+    const counts = {};
     if (obs && obs.Pref){
       for (const pref of obs.Pref) for (const area of (pref.Area||[]))
         for (const city of (area.City||[])) for (const st of (city.IntensityStation||[])){
           const ss = shindo(st.Int);
+          if (ss) counts[ss.k] = (counts[ss.k]||0) + 1;
           if (st.latlon && ss){
             n++;
             L.circleMarker([st.latlon.lat, st.latlon.lon],
@@ -578,6 +615,12 @@ async function showQuake(q){
     let out = "";
     if (cmt) out += '<p class="note" style="margin-bottom:8px">'+esc(cmt.enText||cmt.Text)+"</p>";
     out += "<h3>Observed intensity 観測震度</h3>";
+    const sum = ["7","6+","6-","5+","5-","4","3","2","1"].filter(k => counts[k]).map(k => {
+      const s = shindo(k);
+      return '<span class="si" style="background:'+s.c+';color:'+s.t
+        + ';display:inline-flex;vertical-align:middle">'+s.k+'</span>&thinsp;×'+counts[k];
+    }).join("&ensp;");
+    if (sum) out += '<p class="note" style="margin:5px 0 8px;line-height:2.1">'+sum+"</p>";
     out += n ? '<p class="note">'+n+" stations plotted on the map (coloured dots).</p>" : "";
     out += rows || '<p class="note">No stations at 震度3 or above.</p>';
     document.getElementById("qStations").outerHTML = out;
@@ -1268,7 +1311,8 @@ async function loadAll(){
   const results = await Promise.allSettled(jobs);
   const failed = results.filter(r => r.status === "rejected");
   updateLegend();
-  document.getElementById("fetchTime").textContent = new Date().toLocaleString("ja-JP");
+  document.getElementById("fetchTime").textContent =
+    new Date().toLocaleString("ja-JP", {timeZone:"Asia/Tokyo"}) + " JST";
   card.classList.add("hidden");
   if (failed.length){
     card.classList.remove("hidden");
@@ -1295,7 +1339,7 @@ async function fastRefresh(){
     ]);
     updateLiveBanner();
     document.getElementById("fetchTime").textContent =
-      new Date().toLocaleString("ja-JP") + " (quake·tsunami auto)";
+      new Date().toLocaleString("ja-JP", {timeZone:"Asia/Tokyo"}) + " JST (quake·tsunami auto)";
   }finally{ fastBusy = false; }
 }
 setInterval(fastRefresh, 90e3);
