@@ -178,6 +178,10 @@
     background:#fff;border:1px solid var(--line);border-left:6px solid #2E8B57;border-radius:9px;
     padding:8px 14px;font-size:.8rem;box-shadow:0 2px 8px rgba(20,35,55,.16);max-width:min(560px,90vw)}
   #tsuBanner.active{border-left-color:#D03A2A;background:#FDEDEA}
+  #qPending{position:absolute;top:236px;left:50%;transform:translateX(-50%);z-index:999;
+    max-width:min(560px,calc(100vw - 20px));padding:8px 14px;font-size:.82rem;line-height:1.45;
+    background:#FDEDEA;border:1px solid var(--line);border-left:4px solid #D03A2A;border-radius:12px;
+    box-shadow:0 8px 24px rgba(15,39,64,.15)}
 
   footer{background:#fff;border-top:1px solid var(--line);padding:6px 14px;font-size:.7rem;
     color:#5A6570;display:flex;gap:18px;flex-wrap:wrap}
@@ -216,6 +220,7 @@
       max-width:none!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
       padding:8px 12px!important;font-size:.8rem!important}
     #qfilter,#tsuBanner{top:148px;left:10px;right:10px;transform:none;max-width:none}
+    #qPending{top:200px;left:10px;right:10px;transform:none;max-width:none}
     #hfilter,#tyhfilter{top:148px!important;left:10px!important;right:10px!important;
       transform:none!important;max-width:none!important;justify-content:flex-start!important}#modebar{top:10px;left:10px;right:10px;transform:none;justify-content:flex-start;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;-webkit-mask-image:linear-gradient(90deg,#000 92%,transparent);mask-image:linear-gradient(90deg,#000 92%,transparent)}#modebar::-webkit-scrollbar{display:none}#modebar button{min-width:67px;flex:0 0 auto;padding:7px 8px}#modebar button .me{font-size:.72rem}#modebar button .mj{font-size:.6rem}#panel{inset:0;width:100%;max-width:none;border-radius:0;border:none}#legend{left:8px;right:8px;bottom:8px;max-width:none;max-height:38vh;overflow:auto}footer{display:none}}
 </style>
@@ -289,6 +294,7 @@
   </div>
 
   <div id="tsuBanner" class="hidden"></div>
+  <div id="qPending" class="hidden"></div>
 
   <div id="statusCard">Loading JMA disaster feeds…<small>気象庁 防災情報</small></div>
 
@@ -400,7 +406,20 @@ let curMode = "quake";
 let quakeWindowH = 168;
 
 /* ================= state ================= */
-let quakes = [];               // deduped by eid, latest report
+let quakes = [];               // deduped by eid, latest located report
+let pendingQuakes = [];        // eids seen only as cod-less 震度速報 (epicenter not yet published)
+
+// JIS X 0401 prefecture codes — 震度速報 carries these in int[].code before an epicenter exists
+const PREF_JIS = {"01":"Hokkaido","02":"Aomori","03":"Iwate","04":"Miyagi","05":"Akita",
+  "06":"Yamagata","07":"Fukushima","08":"Ibaraki","09":"Tochigi","10":"Gunma",
+  "11":"Saitama","12":"Chiba","13":"Tokyo","14":"Kanagawa","15":"Niigata",
+  "16":"Toyama","17":"Ishikawa","18":"Fukui","19":"Yamanashi","20":"Nagano",
+  "21":"Gifu","22":"Shizuoka","23":"Aichi","24":"Mie","25":"Shiga",
+  "26":"Kyoto","27":"Osaka","28":"Hyogo","29":"Nara","30":"Wakayama",
+  "31":"Tottori","32":"Shimane","33":"Okayama","34":"Hiroshima","35":"Yamaguchi",
+  "36":"Tokushima","37":"Kagawa","38":"Ehime","39":"Kochi","40":"Fukuoka",
+  "41":"Saga","42":"Nagasaki","43":"Kumamoto","44":"Oita","45":"Miyazaki",
+  "46":"Kagoshima","47":"Okinawa"};
 let warnByOffice = {};         // office -> warning json
 let warnFailed = 0;
 let volcanoList = [];
@@ -448,12 +467,26 @@ document.getElementById("pClose").onclick = () => {
 /* ================= quakes 地震 ================= */
 async function loadQuakes(){
   const list = await (await fetch(JMA + "/quake/data/list.json")).json();
-  const byEid = {};
+  const byEid = {}, anyEid = {};
   for (const q of list){
+    if (!anyEid[q.eid] || q.ctt > anyEid[q.eid].ctt) anyEid[q.eid] = q;
     if (!q.cod) continue;
     if (!byEid[q.eid] || q.ctt > byEid[q.eid].ctt) byEid[q.eid] = q;
   }
   quakes = Object.values(byEid).sort((a,b) => b.at.localeCompare(a.at));
+  // 震度速報-only events: intensity has been observed but JMA has not yet
+  // published an epicenter. These are the first minutes of a significant quake —
+  // surface them instead of silently dropping cod-less entries. Kept for 2 h;
+  // a located report normally supersedes within minutes.
+  pendingQuakes = Object.values(anyEid)
+    .filter(q => !byEid[q.eid] && agoH(q.at) < 2)
+    .sort((a,b) => b.at.localeCompare(a.at));
+}
+
+function pendingLabel(q){
+  const prefs = [...new Set((q.int||[]).map(i => PREF_JIS[i.code] || i.code))];
+  const where = prefs.length ? prefs.slice(0,4).join(", ") + (prefs.length > 4 ? " +" + (prefs.length-4) : "") : "—";
+  return {where, time: (q.at||"").slice(11,16) + " JST"};
 }
 
 function quakeIcon(q){
@@ -481,11 +514,24 @@ function renderQuakes(){
       .bindTooltip("M"+q.mag+" · 震度"+(q.maxi||"—")+" · "+esc(q.en_anm||q.anm), {direction:"top"})
       .addTo(modeQuake);
   }
+  const pend = document.getElementById("qPending");
+  if (curMode === "quake" && pendingQuakes.length){
+    const q = pendingQuakes[0];
+    const s = shindo(q.maxi), lbl = pendingLabel(q);
+    pend.innerHTML = "◉ <b>震度速報 flash report " + lbl.time + "</b> — max intensity "
+      + (s ? '<span class="intBadge" style="background:'+s.c+';color:'+s.t+'">'+s.k+"</span>" : esc(q.maxi||"—"))
+      + " observed in " + esc(lbl.where)
+      + '<br><small>Epicenter &amp; magnitude not yet published by JMA — marker will appear when the located report lands.</small>';
+    pend.classList.remove("hidden");
+  }else{
+    pend.classList.add("hidden");
+  }
   if (curMode === "quake"){
     const w = quakeWindowH ? quakeWindowH+" h" : "full feed";
     document.getElementById("summary").textContent =
       shown + " quakes in last " + w
-      + (maxQ ? " · largest M"+maxQ.mag+" ("+ (maxQ.en_anm||"") +")" : "");
+      + (maxQ ? " · largest M"+maxQ.mag+" ("+ (maxQ.en_anm||"") +")" : "")
+      + (pendingQuakes.length ? " · " + pendingQuakes.length + " flash report pending epicenter" : "");
   }
 }
 
@@ -978,6 +1024,38 @@ document.getElementById("tyMonth").addEventListener("change", renderTyHist);
 document.getElementById("tyFrom").addEventListener("change", renderTyHist);
 
 /* ================= live warning banner ================= */
+// Latest live tsunami bulletin → current state. JMA tsunami bulletins supersede
+// each other, so only the newest non-取消 bulletin within 24 h is read; 解除-only
+// kind lists mean everything has been lifted.
+function tsunamiStatus(){
+  // Only warning-state bulletins (津波警報・注意報・予報) carry a kind[] list;
+  // arrival-time and observation bulletins don't, so skip past them to the
+  // newest bulletin that actually states the warning level.
+  const live = tsunamiList.filter(t => t.rdt && agoH(t.rdt) < 24 && t.ift !== "取消"
+    && (t.kind||[]).some(k => k && k.kind));
+  if (!live.length) return null;
+  const latest = live.reduce((a,b) => (a.ctt > b.ctt ? a : b));
+  const kinds = [...new Set((latest.kind||[]).map(k => k && k.kind).filter(Boolean))];
+  const act = kinds.filter(k => !k.includes("解除"));
+  if (!act.length) return null;
+  if (act.some(k => k.includes("大津波警報"))) return {lv:4, label:"大津波警報 Major Tsunami Warning"};
+  if (act.some(k => k.includes("津波警報")))   return {lv:3, label:"津波警報 Tsunami Warning"};
+  if (act.some(k => k.includes("津波注意報"))) return {lv:2, label:"津波注意報 Tsunami Advisory"};
+  return {lv:1, label:"津波予報 Tsunami Forecast"};
+}
+
+// Strongest quake of the last 24 h at 震度5弱+, located or still epicenter-pending.
+function quakeStatus(){
+  const rank = {"5-":1,"5+":2,"6-":3,"6+":4,"7":5};
+  let best = null;
+  for (const q of [...quakes, ...pendingQuakes]){
+    if (!q.at || agoH(q.at) > 24) continue;
+    const r = rank[q.maxi];
+    if (r && (!best || r > rank[best.maxi] || (r === rank[best.maxi] && q.at > best.at))) best = q;
+  }
+  return best;
+}
+
 function updateLiveBanner(){
   const el = document.getElementById("liveBanner");
   let nAdv = 0, nWrn = 0, nEmg = 0;
@@ -989,19 +1067,36 @@ function updateLiveBanner(){
     if (lv === 1) nAdv++; else if (lv === 2) nWrn++; else if (lv === 3) nEmg++;
   }
   const ty = activeTyphoons.length ? "🌀 " + activeTyphoons.map(t => t.label).join(" · ") + " · " : "";
+  const ts = tsunamiStatus();
+  const qk = quakeStatus();
+  const tsSeg = ts ? "🌊 <b>" + esc(ts.label) + "</b> · " : "";
+  const qkSeg = qk ? "◉ <b>震度" + esc(qk.maxi) + (qk.mag ? " M" + esc(qk.mag) : "") + "</b> "
+      + esc(qk.en_anm || qk.anm || "epicenter pending") + " " + (qk.at||"").slice(11,16) + " · " : "";
+  const qkRank = {"5-":1,"5+":2,"6-":3,"6+":4,"7":5};
   el.classList.remove("hidden");
-  if (nEmg || nWrn){
+  // Severity-ranked border: 大津波警報 / 震度6- and up outrank everything.
+  if ((ts && ts.lv >= 4) || (qk && qkRank[qk.maxi] >= 3)){
+    el.style.borderLeftColor = "#8A2BE2";
+  }else if ((ts && ts.lv >= 3) || qk || nEmg){
     el.style.borderLeftColor = nEmg ? "#8A2BE2" : "#D03A2A";
-    el.innerHTML = ty + "⚠ <b>" + (nEmg ? nEmg + " 特別警報 · " : "") + nWrn
-      + " sub-regions under 警報</b> · " + nAdv + " under 注意報 — tap to view";
-  }else if (nAdv || ty){
+  }else if (nWrn){
+    el.style.borderLeftColor = "#D03A2A";
+  }else if (nAdv || ty || ts){
     el.style.borderLeftColor = "#D9A400";
-    el.innerHTML = ty + "<b>" + nAdv + " sub-regions under 注意報</b> (advisories only) — tap to view";
   }else{
     el.style.borderLeftColor = "#2E8B57";
+  }
+  if (nEmg || nWrn){
+    el.innerHTML = tsSeg + qkSeg + ty + "⚠ <b>" + (nEmg ? nEmg + " 特別警報 · " : "") + nWrn
+      + " sub-regions under 警報</b> · " + nAdv + " under 注意報 — tap to view";
+  }else if (nAdv || ty || ts || qk){
+    el.innerHTML = tsSeg + qkSeg + ty + "<b>" + nAdv + " sub-regions under 注意報</b> — tap to view";
+  }else{
     el.innerHTML = "○ No warnings or advisories in force nationwide";
   }
-  el.onclick = () => document.querySelector('#modebar button[data-mode="warn"]').click();
+  // Click target follows severity: tsunami first, then quake, then warnings.
+  const target = ts ? "tsunami" : (qk ? "quake" : "warn");
+  el.onclick = () => document.querySelector('#modebar button[data-mode="' + target + '"]').click();
 }
 
 /* ================= earthquake history heatmap (USGS FDSN) ================= */
@@ -1131,6 +1226,7 @@ document.getElementById("modebar").addEventListener("click", e => {
   document.getElementById("hfilter").classList.toggle("hidden", curMode !== "history");
   document.getElementById("tyhfilter").classList.toggle("hidden", curMode !== "tyhist");
   document.getElementById("tsuBanner").classList.toggle("hidden", curMode !== "tsunami");
+  if (curMode !== "quake") document.getElementById("qPending").classList.add("hidden");
   document.getElementById("panel").classList.remove("open");
   // refresh summary line for the newly active mode
   if (curMode === "quake") renderQuakes();
@@ -1162,10 +1258,10 @@ async function loadAll(){
 
   // progressive: each feed renders (and the card hides) as soon as it lands
   const jobs = [
-    loadQuakes().then(() => { renderQuakes(); card.classList.add("hidden"); }),
+    loadQuakes().then(() => { renderQuakes(); updateLiveBanner(); card.classList.add("hidden"); }),
     loadWarnings().then(() => { renderWarnings(); updateLiveBanner(); }),
     loadVolcano().then(renderVolcano),
-    loadTsunami().then(renderTsunami),
+    loadTsunami().then(() => { renderTsunami(); updateLiveBanner(); }),
     loadTyphoonsD().then(() => { renderTyphoonMode(); updateLiveBanner(); }),
     JMA_PRESSURE.fetchModelPressure().then(f => { modelField = f; if (typhoonRendered) drawModelIsobars(); })
   ];
@@ -1183,6 +1279,28 @@ async function loadAll(){
   btn.disabled = false;
 }
 document.getElementById("refreshBtn").onclick = loadAll;
+
+/* fast cycle: quakes + tsunami re-fetched every 90 s while the tab is visible,
+   and immediately when the tab regains focus. Weather warnings, volcano and
+   typhoon feeds change slowly and stay on manual Refresh. Same two named JMA
+   endpoints as the initial load — no new hosts. */
+let fastBusy = false;
+async function fastRefresh(){
+  if (document.hidden || fastBusy) return;
+  fastBusy = true;
+  try{
+    await Promise.allSettled([
+      loadQuakes().then(renderQuakes),
+      loadTsunami().then(renderTsunami)
+    ]);
+    updateLiveBanner();
+    document.getElementById("fetchTime").textContent =
+      new Date().toLocaleString("ja-JP") + " (quake·tsunami auto)";
+  }finally{ fastBusy = false; }
+}
+setInterval(fastRefresh, 90e3);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) fastRefresh(); });
+
 loadAll();
 </script>
 </body>
