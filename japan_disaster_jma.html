@@ -14,6 +14,7 @@
 <!-- Shared city registry from the Japan Weather Atlas — must sit in the same folder -->
 <script src="jma_cities.js"></script>
 <script src="jma_pressure.js"></script>
+<script src="jma_nankai.js"></script><!-- Actions-latched 南海トラフ status; page degrades to live-feed-only if absent -->
 
 <style>
   :root{
@@ -319,7 +320,7 @@
 </div>
 
 <footer>
-  <span><b>Source:</b> 気象庁 JMA (jma.go.jp/bosai — quake, warning, tsunami &amp; volcano feeds) · USGS FDSN (history heatmap)</span>
+  <span><b>Source:</b> 気象庁 JMA (jma.go.jp/bosai — quake, warning, tsunami &amp; volcano feeds · 防災情報XML developer feed — 南海トラフ臨時情報, live + hourly Actions latch ⟳) · USGS FDSN (history heatmap)</span>
   <span><b>Fetched:</b> <span id="fetchTime">—</span></span>
   <span>Same undocumented-but-stable JSON feeds as JMA's own site; paths may change without notice. Not an emergency service — for life-safety decisions use official JMA / NHK channels.</span>
 </footer>
@@ -1087,6 +1088,90 @@ function tsunamiStatus(){
   return {lv:1, label:"津波予報 Tsunami Forecast"};
 }
 
+/* ================= 南海トラフ地震臨時情報 =================
+   Two sources, merged by severity:
+   1. jma_nankai.js — latched hourly by GitHub Actions from eqvol_l.xml.
+      Survives the feed's 7-day retention (巨大地震注意 runs ~1 week, 警戒
+      longer), so an advisory in force never vanishes just because its
+      telegram aged out of the feed.
+   2. Live poll of eqvol.xml (46 KB, CORS-clean, ~10 h window) every 10 min,
+      so a freshly issued 調査中 surfaces within minutes of publication
+      instead of waiting for the next Actions run.
+   Detection keys on the Atom entry <title>, which mirrors the telegram
+   Control/Title — no filename inference. Keyword extraction mirrors
+   scripts/ingest_nankai.py and is built from spec No.40601, not an observed
+   VYSE50; a keywordless VYSE50 surfaces as "unknown-advisory", never
+   silently discarded. */
+const NANKAI_FEED = "https://www.data.jma.go.jp/developer/xml/feed/eqvol.xml";
+const NANKAI_RANK = {"none":0, "調査中":1, "unknown-advisory":1, "巨大地震注意":2, "巨大地震警戒":3};
+let nankaiLive = null;          // {status, headline, reportTime, url} from live feed
+let nankaiLiveOk = null;        // last successful live poll (Date) — null = never
+let nankaiLiveErr = false;      // last poll failed (feed unreachable ≠ 平常)
+
+function nankaiKeyword(xml){
+  // priority order matters: a 警戒 headline may also mention 調査
+  const KW = ["巨大地震警戒", "巨大地震注意", "調査終了", "調査中"];
+  const m = xml.match(/<InfoSerial>[\s\S]*?<Name>([^<]+)<\/Name>/);
+  if (m) for (const k of KW) if (m[1].includes(k)) return k;
+  const head = (xml.match(/<Head>[\s\S]*?<\/Head>/) || [xml])[0];
+  for (const scope of [head, xml]) for (const k of KW) if (scope.includes(k)) return k;
+  return null;
+}
+
+async function loadNankai(){
+  try{
+    const txt = await (await fetch(NANKAI_FEED, {cache:"no-store"})).text();
+    const doc = new DOMParser().parseFromString(txt, "application/xml");
+    const entries = [...doc.getElementsByTagName("entry")]
+      .map(e => ({
+        title: (e.getElementsByTagName("title")[0]||{}).textContent || "",
+        url:   (e.getElementsByTagName("link")[0]||{getAttribute:()=>null}).getAttribute("href"),
+        upd:   (e.getElementsByTagName("updated")[0]||{}).textContent || ""
+      }))
+      .filter(e => e.title === "南海トラフ地震臨時情報" && e.url)
+      .sort((a,b) => b.upd.localeCompare(a.upd));
+    if (entries.length){
+      const xml = await (await fetch(entries[0].url, {cache:"no-store"})).text();
+      const kw = nankaiKeyword(xml);
+      const rt = (xml.match(/<ReportDateTime>([^<]+)<\/ReportDateTime>/) || [])[1] || entries[0].upd;
+      const hl = (xml.match(/<Headline>[\s\S]*?<Text>([^<]*)<\/Text>/) || [])[1] || null;
+      nankaiLive = kw === "調査終了"
+        ? {status:"none", ended:true, reportTime:rt, url:entries[0].url}
+        : {status: kw || "unknown-advisory", headline: hl && hl.replace(/\s+/g," ").trim(),
+           reportTime:rt, url:entries[0].url};
+    }else{
+      nankaiLive = null;        // quiet feed — latch (if any) still governs
+    }
+    nankaiLiveOk = new Date(); nankaiLiveErr = false;
+  }catch(e){
+    nankaiLiveErr = true;       // feed failure ≠ 平常; keep last known state
+    throw e;                    // initial load: counted in the failed-feeds card
+  }
+}
+
+// Merged current status: whichever of {latched, live} is more severe wins,
+// EXCEPT a live 調査終了 newer than the latched telegram clears the latch
+// (the Actions file may lag the ending telegram by up to an hour).
+function nankaiStatus(){
+  const latch = (typeof JMA_NANKAI !== "undefined") ? JMA_NANKAI : null;
+  const ls = latch ? (latch.status || "none") : "none";
+  const vs = nankaiLive ? nankaiLive.status : "none";
+  if (nankaiLive && nankaiLive.ended && latch && ls !== "none"
+      && (!latch.reportTime || (nankaiLive.reportTime||"") > latch.reportTime)){
+    return null;                // ended live, stale latch — cleared
+  }
+  const useLive = NANKAI_RANK[vs] >= NANKAI_RANK[ls];
+  const st = useLive ? vs : ls;
+  if (!NANKAI_RANK[st]) return null;
+  const src = useLive ? nankaiLive : latch;
+  return {status: st,
+          reportTime: src.reportTime || null,
+          headline: src.headline || null,
+          via: useLive ? "live" : "latched",
+          lv: NANKAI_RANK[st]};
+}
+/* ================= end 南海トラフ ================= */
+
 // Strongest quake of the last 24 h at 震度5弱+, located or still epicenter-pending.
 function quakeStatus(){
   const rank = {"5-":1,"5+":2,"6-":3,"6+":4,"7":5};
@@ -1112,33 +1197,42 @@ function updateLiveBanner(){
   const ty = activeTyphoons.length ? "🌀 " + activeTyphoons.map(t => t.label).join(" · ") + " · " : "";
   const ts = tsunamiStatus();
   const qk = quakeStatus();
+  const nk = nankaiStatus();
+  const nkLabel = nk ? (nk.status === "unknown-advisory"
+      ? "南海トラフ地震臨時情報（内容確認中 — see JMA）"
+      : "南海トラフ地震臨時情報（" + nk.status + "）") : "";
+  const nkSeg = nk ? "◭ <b>" + esc(nkLabel) + "</b> "
+      + (nk.reportTime ? jstFmt(nk.reportTime).slice(5,16) : "")
+      + (nk.via === "latched" ? " ⟳" : "") + " · " : "";
   const tsSeg = ts ? "🌊 <b>" + esc(ts.label) + "</b> · " : "";
   const qkSeg = qk ? "◉ <b>震度" + esc(qk.maxi) + (qk.mag ? " M" + esc(qk.mag) : "") + "</b> "
       + esc(qk.en_anm || qk.anm || "epicenter pending") + " " + (qk.at||"").slice(11,16) + " · " : "";
   const qkRank = {"5-":1,"5+":2,"6-":3,"6+":4,"7":5};
   el.classList.remove("hidden");
-  // Severity-ranked border: 大津波警報 / 震度6- and up outrank everything.
-  if ((ts && ts.lv >= 4) || (qk && qkRank[qk.maxi] >= 3)){
+  // Severity-ranked border: 大津波警報 / 震度6- and up / 巨大地震警戒 outrank everything.
+  if ((ts && ts.lv >= 4) || (qk && qkRank[qk.maxi] >= 3) || (nk && nk.lv >= 3)){
     el.style.borderLeftColor = "#8A2BE2";
-  }else if ((ts && ts.lv >= 3) || qk || nEmg){
+  }else if ((ts && ts.lv >= 3) || qk || nEmg || (nk && nk.lv >= 2)){
     el.style.borderLeftColor = nEmg ? "#8A2BE2" : "#D03A2A";
   }else if (nWrn){
     el.style.borderLeftColor = "#D03A2A";
-  }else if (nAdv || ty || ts){
+  }else if (nAdv || ty || ts || nk){
     el.style.borderLeftColor = "#D9A400";
   }else{
     el.style.borderLeftColor = "#2E8B57";
   }
   if (nEmg || nWrn){
-    el.innerHTML = tsSeg + qkSeg + ty + "⚠ <b>" + (nEmg ? nEmg + " 特別警報 · " : "") + nWrn
+    el.innerHTML = nkSeg + tsSeg + qkSeg + ty + "⚠ <b>" + (nEmg ? nEmg + " 特別警報 · " : "") + nWrn
       + " sub-regions under 警報</b> · " + nAdv + " under 注意報 — tap to view";
-  }else if (nAdv || ty || ts || qk){
-    el.innerHTML = tsSeg + qkSeg + ty + "<b>" + nAdv + " sub-regions under 注意報</b> — tap to view";
+  }else if (nAdv || ty || ts || qk || nk){
+    el.innerHTML = nkSeg + tsSeg + qkSeg + ty + "<b>" + nAdv + " sub-regions under 注意報</b> — tap to view";
   }else{
-    el.innerHTML = "○ No warnings or advisories in force nationwide";
+    el.innerHTML = "○ No warnings or advisories in force nationwide"
+      + (nankaiLiveErr && !nankaiLiveOk ? " · <span style=\"opacity:.7\">南海トラフ status unverified — feed unreachable</span>" : "");
   }
-  // Click target follows severity: tsunami first, then quake, then warnings.
-  const target = ts ? "tsunami" : (qk ? "quake" : "warn");
+  // Click target follows severity: Nankai advisory and tsunami route to their
+  // authoritative views; a Nankai advisory routes to quake mode (no dedicated mode).
+  const target = ts ? "tsunami" : ((qk || nk) ? "quake" : "warn");
   el.onclick = () => document.querySelector('#modebar button[data-mode="' + target + '"]').click();
 }
 
@@ -1306,6 +1400,7 @@ async function loadAll(){
     loadVolcano().then(renderVolcano),
     loadTsunami().then(() => { renderTsunami(); updateLiveBanner(); }),
     loadTyphoonsD().then(() => { renderTyphoonMode(); updateLiveBanner(); }),
+    loadNankai().then(updateLiveBanner),
     JMA_PRESSURE.fetchModelPressure().then(f => { modelField = f; if (typhoonRendered) drawModelIsobars(); })
   ];
   const results = await Promise.allSettled(jobs);
@@ -1316,7 +1411,7 @@ async function loadAll(){
   card.classList.add("hidden");
   if (failed.length){
     card.classList.remove("hidden");
-    card.innerHTML = failed.length + " of 5 feed groups failed to load — press Refresh to retry.<small>"
+    card.innerHTML = failed.length + " of " + jobs.length + " feed groups failed to load — press Refresh to retry.<small>"
       + failed.map(f => esc(String(f.reason && f.reason.message || f.reason))).join(" · ") + "</small>";
     setTimeout(() => card.classList.add("hidden"), 6000);
   }
@@ -1344,6 +1439,18 @@ async function fastRefresh(){
 }
 setInterval(fastRefresh, 90e3);
 document.addEventListener("visibilitychange", () => { if (!document.hidden) fastRefresh(); });
+
+/* Nankai cycle: 10 min while visible. The advisory timescale is hours-to-days
+   and the feed is 46 KB, so this stays off the 90 s fast cycle. Refetches on
+   tab return only if the last successful poll is older than 10 min. Failures
+   here are silent by design (last known state persists, latch still governs);
+   only the initial load surfaces a fetch failure in the status card. */
+setInterval(() => { if (!document.hidden) loadNankai().then(updateLiveBanner).catch(()=>{}); }, 600e3);
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden && (!nankaiLiveOk || Date.now() - nankaiLiveOk.getTime() > 600e3)){
+    loadNankai().then(updateLiveBanner).catch(()=>{});
+  }
+});
 
 loadAll();
 </script>
