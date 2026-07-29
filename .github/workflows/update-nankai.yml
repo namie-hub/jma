@@ -1,0 +1,49 @@
+# .github/workflows/update-nankai.yml
+# Polls the JMA developer XML long feed hourly for 南海トラフ地震臨時情報 /
+# 関連解説情報 telegrams and latches current status into jma_nankai.js.
+# Latched status persists past the feed's 7-day window until an ending
+# telegram (調査終了) is seen — the advisory outlives the feed retention.
+# Commit-only-on-change: the generated timestamp is stripped before diffing,
+# so a quiet Nankai trough produces zero commits.
+# Failure model: any feed/fetch error fails the run → GitHub failure email.
+name: Update Nankai Trough advisory status
+
+on:
+  schedule:
+    - cron: "12 * * * *"   # hourly at :12 (offset to dodge top-of-hour congestion)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Nankai ingest
+        run: |
+          cp jma_nankai.js /tmp/nankai_prev.js 2>/dev/null || true
+          python3 scripts/ingest_nankai.py jma_nankai.js
+
+      - name: Commit only on real change
+        run: |
+          strip() { grep -v '"generated"' "$1" > "$2" || true; }
+          strip jma_nankai.js /tmp/new.stripped
+          if [ -f /tmp/nankai_prev.js ]; then
+            strip /tmp/nankai_prev.js /tmp/old.stripped
+          else
+            : > /tmp/old.stripped
+          fi
+          if cmp -s /tmp/old.stripped /tmp/new.stripped; then
+            echo "No Nankai status change — skipping commit."
+            git checkout -- jma_nankai.js 2>/dev/null || true
+            exit 0
+          fi
+          STATUS=$(python3 -c "import re,json;print(json.loads(re.search(r'const JMA_NANKAI\s*=\s*({.*});',open('jma_nankai.js',encoding='utf-8').read(),re.S).group(1))['status'])")
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add jma_nankai.js
+          git commit -m "nankai: status → ${STATUS}"
+          git push
