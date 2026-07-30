@@ -14,7 +14,7 @@
 <!-- Shared city registry from the Japan Weather Atlas — must sit in the same folder -->
 <script src="jma_cities.js"></script>
 <script src="jma_pressure.js"></script>
-<script src="jma_nankai.js"></script><!-- Actions-latched 南海トラフ status; page degrades to live-feed-only if absent -->
+<script src="jma_nankai.js"></script><!-- Actions-latched 南海トラフ status (atlas-ingest.yml, every 30 min); page degrades to live-feed-only if absent -->
 
 <style>
   :root{
@@ -320,7 +320,9 @@
 </div>
 
 <footer>
-  <span><b>Source:</b> 気象庁 JMA (jma.go.jp/bosai — quake, warning, tsunami &amp; volcano feeds · 防災情報XML developer feed — 南海トラフ臨時情報, live + hourly Actions latch ⟳) · USGS FDSN (history heatmap)</span>
+  <span><b>Source:</b> 気象庁 JMA (jma.go.jp/bosai — quake, warning, tsunami &amp; volcano feeds · 防災情報XML developer feed — 南海トラフ臨時情報, live + Actions latch ⟳ every 30 min) · USGS FDSN (history heatmap) ·
+  api.github.com (read-only heartbeat of the latch workflow — run timestamps only, so a dead
+  pipeline is announced instead of silently impersonating a quiet one)</span>
   <span><b>Fetched:</b> <span id="fetchTime">—</span></span>
   <span>Same undocumented-but-stable JSON feeds as JMA's own site; paths may change without notice. Not an emergency service — for life-safety decisions use official JMA / NHK channels.</span>
 </footer>
@@ -1088,9 +1090,42 @@ function tsunamiStatus(){
   return {lv:1, label:"津波予報 Tsunami Forecast"};
 }
 
+/* ============ Actions pipeline heartbeat (api.github.com) ============
+ * jma_nankai.js is committed only when the latched status actually changes,
+ * so its "generated" field freezes during quiet spells — which for the
+ * Nankai trough is the permanent norm. Zero commits therefore proves
+ * nothing: a healthy pipeline and a dead one look identical in the repo.
+ * The Actions run history is the only truth about "last ran", so ask it
+ * directly: api.github.com is CORS-open, unauthenticated (60 req/h per
+ * visitor; one call per load + one per 30 min). Three states, same
+ * convention as nankaiLive: undefined = not yet answered, null =
+ * unreachable (offline / rate-limited / file://), object = a real answer.
+ * The banner warns ONLY on a positive dead verdict (stalled/failed) —
+ * never on "couldn't check": the live 10-min eqvol.xml poll keeps working
+ * regardless, and this page's quiet state must stay quiet.             */
+let pipeHb;
+const PIPE_HB_URL = "https://api.github.com/repos/namie-hub/jma/actions/workflows/atlas-ingest.yml/runs?per_page=5";
+function pipeVerdict(){
+  if (pipeHb === undefined || pipeHb === null) return {mode:"unknown"};
+  const runAge = Date.now() - new Date(pipeHb.ranAt).getTime();
+  if (runAge > 3*3600*1000)            return {mode:"stalled", runAge};
+  if (pipeHb.conclusion !== "success") return {mode:"failed", runAge};
+  return {mode:"ok", runAge};
+}
+async function loadPipeHb(){
+  try{
+    const r = await fetch(PIPE_HB_URL, {headers:{Accept:"application/vnd.github+json"}});
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    const runs = (await r.json()).workflow_runs || [];
+    const done = runs.find(x => x.status === "completed" && x.conclusion !== "cancelled" && x.conclusion !== "skipped");
+    pipeHb = done ? {ranAt: done.run_started_at, conclusion: done.conclusion} : null;
+  }catch(e){ pipeHb = null; }
+  updateLiveBanner();   /* re-render with the verdict */
+}
+
 /* ================= 南海トラフ地震臨時情報 =================
    Two sources, merged by severity:
-   1. jma_nankai.js — latched hourly by GitHub Actions from eqvol_l.xml.
+   1. jma_nankai.js — latched every 30 min by GitHub Actions (atlas-ingest.yml) from eqvol_l.xml.
       Survives the feed's 7-day retention (巨大地震注意 runs ~1 week, 警戒
       longer), so an advisory in force never vanishes just because its
       telegram aged out of the feed.
@@ -1208,6 +1243,15 @@ function updateLiveBanner(){
   const qkSeg = qk ? "◉ <b>震度" + esc(qk.maxi) + (qk.mag ? " M" + esc(qk.mag) : "") + "</b> "
       + esc(qk.en_anm || qk.anm || "epicenter pending") + " " + (qk.at||"").slice(11,16) + " · " : "";
   const qkRank = {"5-":1,"5+":2,"6-":3,"6+":4,"7":5};
+  /* Latch-pipeline warning: shown only on a positive dead verdict. A dead
+   * latch pipeline means a latched advisory can no longer update or clear,
+   * and one older than the live feed window could not be re-derived — but
+   * the 10-min live poll keeps catching fresh telegrams either way. */
+  const pvNk = pipeVerdict();
+  const pipeSeg = (pvNk.mode === "stalled" || pvNk.mode === "failed")
+    ? " · ⚠ <b>Nankai latch pipeline " + (pvNk.mode === "stalled" ? "stalled" : "failing")
+      + "</b> (last run " + Math.round(pvNk.runAge/3600000) + " h ago — live 10-min poll unaffected)"
+    : "";
   el.classList.remove("hidden");
   // Severity-ranked border: 大津波警報 / 震度6- and up / 巨大地震警戒 outrank everything.
   if ((ts && ts.lv >= 4) || (qk && qkRank[qk.maxi] >= 3) || (nk && nk.lv >= 3)){
@@ -1223,11 +1267,11 @@ function updateLiveBanner(){
   }
   if (nEmg || nWrn){
     el.innerHTML = nkSeg + tsSeg + qkSeg + ty + "⚠ <b>" + (nEmg ? nEmg + " 特別警報 · " : "") + nWrn
-      + " sub-regions under 警報</b> · " + nAdv + " under 注意報 — tap to view";
+      + " sub-regions under 警報</b> · " + nAdv + " under 注意報 — tap to view" + pipeSeg;
   }else if (nAdv || ty || ts || qk || nk){
-    el.innerHTML = nkSeg + tsSeg + qkSeg + ty + "<b>" + nAdv + " sub-regions under 注意報</b> — tap to view";
+    el.innerHTML = nkSeg + tsSeg + qkSeg + ty + "<b>" + nAdv + " sub-regions under 注意報</b> — tap to view" + pipeSeg;
   }else{
-    el.innerHTML = "○ No warnings or advisories in force nationwide"
+    el.innerHTML = "○ No warnings or advisories in force nationwide" + pipeSeg
       + (nankaiLiveErr && !nankaiLiveOk ? " · <span style=\"opacity:.7\">南海トラフ status unverified — feed unreachable</span>" : "");
   }
   // Click target follows severity: Nankai advisory and tsunami route to their
@@ -1446,6 +1490,10 @@ document.addEventListener("visibilitychange", () => { if (!document.hidden) fast
    here are silent by design (last known state persists, latch still governs);
    only the initial load surfaces a fetch failure in the status card. */
 setInterval(() => { if (!document.hidden) loadNankai().then(updateLiveBanner).catch(()=>{}); }, 600e3);
+/* Latch-pipeline heartbeat: once at load, re-checked every 30 min (the
+ * ingest cadence — asking faster learns nothing). Resolution re-renders
+ * the banner; failures degrade to the quiet "unknown" verdict. */
+loadPipeHb(); setInterval(() => { if (!document.hidden) loadPipeHb(); }, 30*60*1000);
 document.addEventListener("visibilitychange", () => {
   if (!document.hidden && (!nankaiLiveOk || Date.now() - nankaiLiveOk.getTime() > 600e3)){
     loadNankai().then(updateLiveBanner).catch(()=>{});
