@@ -1,0 +1,135 @@
+# .github/workflows/atlas-ingest.yml
+#
+# ONE workflow for all Actions-side ingests of the Japan Atlas:
+#   - HKO comparison track  -> hko_tctrack.js   (scripts/ingest_hko_tctrack.py)
+#   - Nankai Trough latch   -> jma_nankai.js    (scripts/ingest_nankai.py)
+#   - TC forecast archiver  -> archive/tc_*.json (scripts/archive_typhoon_forecasts.py)
+#
+# REPLACES update-nankai.yml — DELETE that file when adding this one, or the
+# two workflows will double-poll JMA and race each other on push (the exact
+# failure that hit the HK Atlas on 23 Jul 2026 and forced its consolidation).
+# update-phenology.yml and update-typhoon-history.yml stay separate: their
+# daily/weekly cadences never overlap this one's minutes, and folding slow
+# archives into a 30-minute job would re-run them 47 times a day for nothing.
+#
+# Why the HKO leg exists at all: scripts/ingest_hko_tctrack.py has been in
+# the repo since 23 Jul with NO workflow running it, so the weather page's
+# HKO comparison layer sat frozen at its seed. Same for the archiver — no
+# bulletins were being banked, which Batch 4 (hindsight scoring) depends on.
+#
+# Cadence: :12 and :42 every hour, mirroring the HK Atlas. HKO bulletins
+# land on the :00/:30 grid (3-hourly near, 6-hourly distant), so worst-case
+# pickup lag is ~12 min. The Nankai leg was hourly under update-nankai.yml;
+# at :12/:42 it now polls eqvol_l.xml twice hourly — a 46 KB feed built for
+# polling, and the browser already hits eqvol.xml every 10 min. Simpler than
+# gating the leg by wall-clock minute, which delayed cron makes unreliable.
+#
+# Commit-only-on-change: volatile generation timestamps ("generatedAt" in
+# hko_tctrack.js, "generated" in jma_nankai.js) are stripped before diffing,
+# so quiet periods produce zero commits. Archive files carry no top-level
+# timestamp: the archiver dedups on bulletin issue time and only touches a
+# file when a genuinely new bulletin exists, so plain git-status detects it.
+#
+# Escalation model (differs from the HK workflow's, deliberately): a leg
+# failing is escalated ONLY if this workflow has had no fully-green run in
+# the past 3 h, checked against the Actions API with the job's own token.
+# The HK rule ("failed leg + committed data older than 3 h") misfires during
+# quiet spells, where data is legitimately old — one transient blip would
+# email. "No green run in 3 h" is true sustained failure regardless of how
+# quiet the feeds are. (Candidate backport to the HK workflow later.)
+#
+# NOTE the permissions block: contents:write alone would strip the token's
+# default actions:read, silently breaking the escalation query.
+
+name: Japan Atlas data ingest
+
+on:
+  schedule:
+    - cron: "12,42 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+# Delayed cron runs can queue up; never let two ingests run concurrently.
+concurrency:
+  group: atlas-ingest
+  cancel-in-progress: false
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Run all ingests (each fail-loudly, none blocks the others)
+        id: run
+        run: |
+          fails=""
+          python3 scripts/ingest_hko_tctrack.py          || fails="$fails hko"
+          python3 scripts/ingest_nankai.py jma_nankai.js || fails="$fails nankai"
+          python3 scripts/archive_typhoon_forecasts.py archive || fails="$fails archiver"
+          echo "fails=${fails# }" >> "$GITHUB_OUTPUT"
+
+      - name: Commit whatever changed (ignoring generation timestamps), rebase-retry push
+        run: |
+          # A failed leg exits without writing (fail-loudly scripts), so its
+          # file is simply unchanged here and the healthy legs still commit.
+          strip() { grep -v '"generatedAt"' "$1" | grep -v '"generated"' || true; }
+          changed=""
+          for f in hko_tctrack.js jma_nankai.js; do
+            if git show "HEAD:$f" > /tmp/old.js 2>/dev/null \
+               && diff <(strip /tmp/old.js) <(strip "$f") > /dev/null; then
+              git checkout -- "$f" 2>/dev/null || true   # discard timestamp-only rewrite
+              echo "$f unchanged."
+            else
+              changed="$changed $f"
+            fi
+          done
+          # Archive files: new or updated snapshots only; no volatile fields.
+          if [ -n "$(git status --porcelain archive/ 2>/dev/null)" ]; then
+            changed="$changed archive"
+            git add -A archive/
+          fi
+          if [ -z "$changed" ]; then
+            echo "No data changed — no commit."
+            exit 0
+          fi
+          git config user.name  "atlas-bot"
+          git config user.email "actions@users.noreply.github.com"
+          for f in $changed; do [ "$f" = archive ] || git add "$f"; done
+          git commit -m "Atlas ingest:$changed"
+          # A push can still lose a race (e.g. against a manual web-UI push).
+          # Rebase our data commit onto origin and retry.
+          ok=""
+          for i in 1 2 3; do
+            if git push; then ok=1; break; fi
+            echo "push rejected (attempt $i) — rebasing onto origin/main"
+            git pull --rebase origin main
+          done
+          [ -n "$ok" ] || { echo "push failed after 3 attempts" >&2; exit 1; }
+
+      - name: Escalate only sustained ingest failures
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          fails="${{ steps.run.outputs.fails }}"
+          [ -z "$fails" ] && { echo "all ingests OK"; exit 0; }
+          echo "failed leg(s):$fails — checking for a green run in the last 3 h"
+          last_green=$(curl -sf \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/workflows/atlas-ingest.yml/runs?status=success&per_page=1" \
+            | python3 -c "import json,sys; r=json.load(sys.stdin).get('workflow_runs') or []; print(r[0]['run_started_at'] if r else '')")
+          if [ -n "$last_green" ]; then
+            age=$(( $(date +%s) - $(date -d "$last_green" +%s) ))
+            if [ "$age" -le 10800 ]; then
+              echo "transient: green run ${age}s ago — no alert, next run will retry"
+              exit 0
+            fi
+            echo "SUSTAINED FAILURE: no green run for ${age}s (>3h). This alert is real." >&2
+          else
+            echo "SUSTAINED FAILURE: no successful run of this workflow found at all." >&2
+          fi
+          exit 1
