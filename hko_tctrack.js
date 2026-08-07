@@ -5,7 +5,7 @@
  * The page shows bulletinTime and generatedAt separately: staleness is
  * always visible, never hidden. */
 const HK_TCTRACK = {
-  "generatedAt": "2026-08-07T15:39:27+00:00",
+  "generatedAt": "2026-08-07T20:23:33+00:00",
   "source": "HKO tc_list.xml + hko_tctrack_{TCID}.xml on www.weather.gov.hk (no CORS headers; ingested every 30 min by GitHub Actions)",
   "storms": [
     {
@@ -797,6 +797,85 @@ const HK_TCTRACK = {
           "time": "2026-08-12T12:00:00+00:00",
           "intensity": "Tropical Depression",
           "wind": "45km/h"
+        }
+      ]
+    },
+    {
+      "id": "2622",
+      "nameEn": "Tropical Depression",
+      "nameZh": "熱帶低氣壓",
+      "bulletinTime": "2026-08-08T03:40:58+08:00",
+      "analysis": {
+        "lat": 19.9,
+        "lon": 108.6,
+        "time": "2026-08-07T18:00:00+00:00",
+        "intensity": "Tropical Depression",
+        "wind": "45km/h"
+      },
+      "past": [],
+      "forecast": [
+        {
+          "i": 1,
+          "lat": 19.81,
+          "lon": 108.7
+        },
+        {
+          "i": 2,
+          "lat": 19.68,
+          "lon": 108.84
+        },
+        {
+          "i": 3,
+          "lat": 19.52,
+          "lon": 109.0
+        },
+        {
+          "i": 4,
+          "lat": 19.37,
+          "lon": 109.17
+        },
+        {
+          "i": 5,
+          "lat": 19.22,
+          "lon": 109.35
+        },
+        {
+          "i": 6,
+          "lat": 19.1,
+          "lon": 109.5
+        },
+        {
+          "i": 7,
+          "lat": 19.01,
+          "lon": 109.65
+        },
+        {
+          "i": 8,
+          "lat": 18.92,
+          "lon": 109.8
+        },
+        {
+          "i": 9,
+          "lat": 18.85,
+          "lon": 109.96
+        },
+        {
+          "i": 10,
+          "lat": 18.79,
+          "lon": 110.1
+        },
+        {
+          "i": 11,
+          "lat": 18.74,
+          "lon": 110.21
+        },
+        {
+          "i": 12,
+          "lat": 18.7,
+          "lon": 110.3,
+          "time": "2026-08-08T06:00:00+00:00",
+          "intensity": "Low Pressure Area",
+          "wind": "40km/h"
         }
       ]
     }
