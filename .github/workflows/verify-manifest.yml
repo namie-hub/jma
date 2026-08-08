@@ -1,18 +1,56 @@
+# .github/workflows/verify-manifest.yml
+#
+# Two checks, deliberately separate — one alone is not enough:
+#
+#   1. Tree matches the COMMITTED manifest. Run first, before any
+#      regeneration. Catches a hand-edited source file whose hash was never
+#      updated. This is the check that fails when someone edits a page and
+#      forgets to re-run the generator.
+#
+#   2. The committed manifest is COMPLETE. Regenerate, then compare. Catches
+#      a new source file that was never added, or a deleted one still listed.
+#
+# Why not regenerate-then-verify (the obvious one-liner): regeneration writes
+# the manifest FROM the tree, so the subsequent verify matches by
+# construction and can never fail. It looks green forever while detecting
+# nothing.
+#
+# The header carries a generation timestamp that changes on every run, so
+# check 2 compares only the non-comment lines — the same volatile-field
+# strip that atlas-ingest.yml applies to generatedAt before diffing.
+#
+# Actions-owned files (hko_tctrack.js, jma_nankai.js, jma_phenology.js,
+# jma_typhoon_history.js, archive/*) are excluded by make_manifest.sh, so bot
+# commits never trip this. Only hand edits do.
+
 name: Verify Manifest
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
 
 jobs:
   verify:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
 
-      - name: Generate manifest
-        run: bash scripts/make_manifest.sh
-
-      - name: Verify manifest
+      - name: Tree matches the committed manifest
         run: sha256sum -c MANIFEST.sha256
+
+      - name: Committed manifest is complete and current
+        run: |
+          cp MANIFEST.sha256 /tmp/committed.sha256
+          bash scripts/make_manifest.sh
+          if ! diff <(grep -v '^#' /tmp/committed.sha256) \
+                    <(grep -v '^#' MANIFEST.sha256); then
+            echo "::error::MANIFEST.sha256 is out of date." >&2
+            echo "Run 'bash scripts/make_manifest.sh' and commit the result." >&2
+            exit 1
+          fi
+          echo "Manifest is complete and current."
