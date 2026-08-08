@@ -22,6 +22,12 @@ advisory is a verification event. Extraction is deliberately forgiving:
 InfoSerial/Name first, then a priority-ordered regex over Head, then the
 whole telegram; if a VYSE50 exists but no keyword matches, status becomes
 "unknown-advisory" — surfaced, never silently discarded.
+
+The InfoSerial pattern is verified against a live VYSE52 telegram (8 Aug
+2026): the element carries a codeType attribute, so the pattern must
+tolerate attributes. An earlier version matched a bare opening tag only and
+therefore never fired, silently demoting every extraction to the Head
+fallback. tests/test_ingest_nankai.py pins this.
 """
 import json, re, sys, urllib.request
 from datetime import datetime, timezone
@@ -55,7 +61,7 @@ def parse_entries(feed_xml):
 
 def extract_keyword(telegram_xml):
     """InfoSerial/Name first, then priority regex over Head, then whole body."""
-    m = re.search(r"<InfoSerial>.*?<Name>([^<]+)</Name>", telegram_xml, re.S)
+    m = re.search(r"<InfoSerial\b[^>]*>.*?<Name>([^<]+)</Name>", telegram_xml, re.S)
     if m:
         name = m.group(1).strip()
         for k in KEYWORDS:
