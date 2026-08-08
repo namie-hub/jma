@@ -23,7 +23,9 @@ Output:
 
 forecast is hourly-interpolated by HKO (Index = hours ahead, typically
 1..120); only 24-hour waypoints carry time/intensity/wind. All points are
-kept: the full list draws the smooth line, the waypoints get markers.
+kept: the full list draws the smooth line, the waypoints get markers. HKO
+can keep an analysis-only system in tc_list.xml after it stops issuing a
+forecast; in that valid state forecast is an empty list.
 
 storms: [] with a fresh generatedAt is a REAL ANSWER (no forecast track
 currently issued by HKO), not a failure.
@@ -32,11 +34,20 @@ Fail-loudly policy: any fetch or parse failure exits non-zero WITHOUT
 writing, so the previous file stays in place and its ageing generatedAt
 makes the outage visible on the page, while the Actions failure email is
 the alert. A partially-written file could silently hide a storm.
+
+Transient-fetch policy: www.weather.gov.hk returns occasional 5xx (an
+observed 503 between two runs 25 s apart on 8 Aug 2026). A single blip
+must not fail the leg, because the workflow escalates any leg failure once
+there has been no green run for 3 h — so blips become alert noise. fetch()
+therefore retries 5xx/network errors twice with linear backoff. 4xx is NOT
+retried: that is a real URL or contract change and should fail loudly.
 """
 from __future__ import annotations
 
 import json
 import sys
+import time
+import urllib.error
 import urllib.request
 import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
@@ -47,9 +58,24 @@ OUT = Path(__file__).resolve().parent.parent / "hko_tctrack.js"
 UA = {"User-Agent": "hk-weather-atlas-tctrack-ingest"}
 
 
-def fetch(url: str) -> bytes:
+def fetch(url: str, attempts: int = 3, backoff: float = 5.0) -> bytes:
+    """GET url, retrying 5xx and network errors. 4xx raises immediately."""
     req = urllib.request.Request(url, headers=UA)
-    return urllib.request.urlopen(req, timeout=30).read()
+    for n in range(1, attempts + 1):
+        try:
+            return urllib.request.urlopen(req, timeout=30).read()
+        except urllib.error.HTTPError as e:
+            if e.code < 500 or n == attempts:
+                raise
+            why = f"HTTP {e.code}"
+        except (urllib.error.URLError, TimeoutError) as e:
+            if n == attempts:
+                raise
+            why = getattr(e, "reason", None) or type(e).__name__
+        print(f"transient fetch failure ({why}) on {url} — "
+              f"attempt {n}/{attempts}, retrying", file=sys.stderr)
+        time.sleep(backoff * n)
+    raise RuntimeError("unreachable")  # loop either returns or raises
 
 
 def parse_deg(txt: str, kind: str) -> float:
@@ -99,7 +125,12 @@ def parse_track(xml_bytes: bytes, tcid: str) -> dict:
     forecast = [point(e, want_index=True) for e in wr.findall("ForecastInformation")]
     forecast.sort(key=lambda p: p.get("i", 0))
     if not forecast:
-        raise ValueError(f"no forecast points for TC {tcid} — format may have changed")
+        # Valid state, not an error (see docstring). Logged rather than
+        # silent so that a genuine schema break — ForecastInformation
+        # vanishing for EVERY storm — still leaves a trace in the run log
+        # instead of quietly producing a file with no forecast lines.
+        print(f"NOTE: TC {tcid} carries no forecast track (analysis + past only).",
+              file=sys.stderr)
     return {
         "bulletinTime": bulletin,
         "analysis": point(ana_el, want_index=False),
@@ -147,7 +178,10 @@ def main() -> int:
         encoding="utf-8",
     )
     if storms:
-        names = ", ".join(f"{s['nameEn']} (#{s['id']}, {len(s['forecast'])} fc pts)" for s in storms)
+        names = ", ".join(
+            f"{s['nameEn']} (#{s['id']}, "
+            + (f"{len(s['forecast'])} fc pts" if s["forecast"] else "no forecast track")
+            + ")" for s in storms)
         print(f"OK: {len(storms)} storm(s): {names}")
     else:
         print("OK: no forecast track currently issued by HKO (real answer, file written).")
