@@ -1,29 +1,33 @@
-# Japan Weather/Disaster Atlas — Batch 1 + Batch 2 record
-# Generated: 2026-07-23 11:54 UTC
-# Batch 1: volcano event-feed indicator; typhoon tap halos + pane discipline;
-#   feed-check retry; TC forecast archiver (+ seed).
-# Batch 2: HKO comparison track — ingest_hko_tctrack.py (proven HK code),
-#   update-hko-tctrack.yml (:09/:39 cron), hko_tctrack.js seed, blue dashed
-#   comparison overlay on the weather page. JMA dots win overlapping taps;
-#   missing hko_tctrack.js degrades silently to JMA-only.
-# Actions-owned generated files (will diverge): hko_tctrack.js, archive/*.
+# Japan Weather/Disaster Atlas — hand-authored source integrity record
+# Generated: 2026-08-08 16:25 UTC by scripts/make_manifest.sh
+#
+# EXCLUDED by design (Actions-owned, rewritten by the ingest workflows):
+#   hko_tctrack.js  jma_nankai.js  jma_phenology.js  jma_typhoon_history.js
+#   archive/*  and the derived japan-weather-atlas.zip bundle.
+# Everything below is hand-authored: a mismatch is a real finding.
+#
+# Verify: sha256sum -c MANIFEST.sha256   (macOS: shasum -a 256 -c)
 #
 # sha256  path
+f917c2259f2a62e94f41632c5efbf23fb24abcc16aaaafbe0f82f265b3c583cf  .github/workflows/atlas-ingest.yml
+ca8ce3bcb15d16b1b1d808b2f161b239ecd4a9b71a6b6170267fe89cbfef0398  .github/workflows/feed-check.yml
+d2b63315c6e3d2a30b063901be169efc17a39f486b17c2d8ac57bbae6a9011c1  .github/workflows/update-phenology.yml
+2da67423ef142ef6d9631ada1359cf3add0d6c1b4549d5e5709fc2ab04baf767  .github/workflows/update-typhoon-history.yml
+b2d2b5fdfb0c2265c35556a09ec794dd85f28baf20f6cf7e35818199d410bfca  README-DEPLOY.md
 ca83629d9b85452af0fddc358d396c6fa4796bf6424951f7e967b41460e2411d  README.md
-83e2276faf7d0c0f9c49a9fe1baecc1b1b9a6061dfc07bb5d1c30074115b2cf0  hko_tctrack.js
 562b26a540b1e028b0f59890c151c4c02d3ec4ea6222f056fac0d995745cec81  index.html
 27e335a679dbdc27c23649236b258cb664bc24fee87f6384710a58ac40f3bdd0  ingest_typhoon_history.py
-08a940d3b1d8b5e9c0eacca5b13ca14fb3c916275ffdeda81a8c33322a4c125a  japan_disaster_jma.html
-7a5a1c6dbb017179da100ce083f88c8283d3953d3bb9d6c655d5f9b7072933c2  japan_weather_jma.html
+b974012b54e9a61748f360224b816b77d4ce67ddbeac9db7df590a754da4a33b  japan_disaster_jma.html
+ee19d8fef45e664b6baec520e8c94dc19e8f21b9b7aa929aa1f25a3b9687723b  japan_weather_jma.html
 2d79e79f3bcb147f64ef682d5483662c88626b4ca01313af089f4e3a598c1158  jma_cities.js
-eb4521e4411f1fa82ce1e5875d12b9881ae0a38f4ccee90f5df78e6c7ec3cdb3  jma_phenology.js
 7712714e286aabda7917e85323f2f9230bec9427808e0e60b0465ddbcc19d828  jma_pressure.js
-92beaf5eaf5f902ef7f6146fc8f84990d0ba95c572b65f9ff7967dc2049d4f9a  jma_typhoon_history.js
-399146d28bfe73d0633e4f5271a98efd5fd27b323a25d19e49bdebab3d9a0320  github/workflows/archive-forecasts.yml
-50d9c2ff2ba69835fedcd702697018cca527291853e8f1cfc7ff7dd78e64b1e9  github/workflows/update-hko-tctrack.yml
 53e924293d43a134f49bb60086608701f9f3ce495f91d1968aa394a72d0c885e  scripts/archive_typhoon_forecasts.py
 e5ea35c8589093f7888e49f01b41b372cd43ac4b09bbd3e105d4dac0984383ae  scripts/check_feeds.js
-8958b0274cf6d664da59f2e5574ce805b879086ca90b5876455c1896fdcc7251  scripts/ingest_hko_tctrack.py
+ee3dcefa7cd7426c4401509c352d6db225f1e5b6e9f345b4c8b2e8bede7e94b5  scripts/ingest_hko_tctrack.py
+205d2089aa96a0b81d5b6a3dc298ce478e8533808de8762fdd7e648be1133e66  scripts/ingest_nankai.py
 6a1888e3b67f04d9a021117ca2f92951293bceeed45313394205fe82013e8519  scripts/ingest_phenology.py
 27e335a679dbdc27c23649236b258cb664bc24fee87f6384710a58ac40f3bdd0  scripts/ingest_typhoon_history.py
-eab416de6a8a9549b3188f695673fdbf005a769bba5e96a2545c46e055756b0d  archive/tc_TC2614.json
+e8880b18fa24e8507c7c18b26275dfbd6ff685d6bec633815f271039cf5e9493  scripts/make_manifest.sh
+bdd55ceef6022adc1c631cb43937469c6d7d8d723eb82f8e1090d006db8a6c65  tests/test_archive_typhoon_forecasts.py
+19d67dca4b7088770e64ca663a8456b643cabd979af573a1d4c05dbc4a5f46ef  tests/test_ingest_hko_tctrack.py
+a7f9f32ddc6f47c18950796bd721d6876ac0c6aa11f0c3b955bbb7013ecb71c5  tests/test_ingest_nankai.py
