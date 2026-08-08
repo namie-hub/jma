@@ -40,6 +40,13 @@
 #
 # NOTE the permissions block: contents:write alone would strip the token's
 # default actions:read, silently breaking the escalation query.
+#
+# The unit-test step runs BEFORE the ingests and is fail-fast, deliberately:
+# if the parser contract is broken, the correct outcome is to write nothing
+# and leave the previous data in place, exactly as a fetch failure does. The
+# tests are offline fixtures (~0.01 s), so paying for them 48x/day is free,
+# and gating here guarantees they actually run — a push-only test workflow
+# would never fire on the scheduled path, which is the only path that writes.
 
 name: Japan Atlas data ingest
 
@@ -62,6 +69,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+
+      - name: Parser contract tests (fail fast — a broken parser writes nothing)
+        run: python3 -m unittest discover -s tests
 
       - name: Run all ingests (each fail-loudly, none blocks the others)
         id: run
