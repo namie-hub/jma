@@ -1,0 +1,18 @@
+name: Verify Manifest
+
+on:
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Generate manifest
+        run: bash scripts/make_manifest.sh
+
+      - name: Verify manifest
+        run: sha256sum -c MANIFEST.sha256
