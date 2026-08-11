@@ -5,7 +5,7 @@
  * The page shows bulletinTime and generatedAt separately: staleness is
  * always visible, never hidden. */
 const HK_TCTRACK = {
-  "generatedAt": "2026-08-11T17:38:00+00:00",
+  "generatedAt": "2026-08-11T21:01:30+00:00",
   "source": "HKO tc_list.xml + hko_tctrack_{TCID}.xml on www.weather.gov.hk (no CORS headers; ingested every 30 min by GitHub Actions)",
   "storms": [
     {
@@ -372,13 +372,13 @@ const HK_TCTRACK = {
       "id": "2623",
       "nameEn": "CHAN-HOM",
       "nameZh": "燦鴻",
-      "bulletinTime": "2026-08-12T01:00:29+08:00",
+      "bulletinTime": "2026-08-12T04:00:29+08:00",
       "analysis": {
-        "lat": 35.8,
-        "lon": 138.9,
-        "time": "2026-08-11T15:00:00+00:00",
-        "intensity": "Tropical Storm",
-        "wind": "65km/h"
+        "lat": 35.7,
+        "lon": 137.1,
+        "time": "2026-08-11T18:00:00+00:00",
+        "intensity": "Tropical Depression",
+        "wind": "55km/h"
       },
       "past": [
         {
@@ -412,131 +412,109 @@ const HK_TCTRACK = {
           "time": "2026-08-11T12:00:00+00:00",
           "intensity": "Tropical Storm",
           "wind": "75km/h"
+        },
+        {
+          "i": 5,
+          "lat": 35.8,
+          "lon": 138.9,
+          "time": "2026-08-11T15:00:00+00:00",
+          "intensity": "Tropical Storm",
+          "wind": "65km/h"
         }
       ],
       "forecast": [
         {
           "i": 1,
-          "lat": 35.87,
-          "lon": 138.62
+          "lat": 35.76,
+          "lon": 136.94
         },
         {
           "i": 2,
-          "lat": 35.98,
-          "lon": 138.22
+          "lat": 35.84,
+          "lon": 136.71
         },
         {
           "i": 3,
-          "lat": 36.1,
-          "lon": 137.75
+          "lat": 35.93,
+          "lon": 136.44
         },
         {
           "i": 4,
-          "lat": 36.22,
-          "lon": 137.26
+          "lat": 36.03,
+          "lon": 136.15
         },
         {
           "i": 5,
-          "lat": 36.33,
-          "lon": 136.79
+          "lat": 36.12,
+          "lon": 135.86
         },
         {
           "i": 6,
-          "lat": 36.4,
-          "lon": 136.4
+          "lat": 36.2,
+          "lon": 135.6
         },
         {
           "i": 7,
-          "lat": 36.44,
-          "lon": 136.08
+          "lat": 36.27,
+          "lon": 135.36
         },
         {
           "i": 8,
-          "lat": 36.45,
-          "lon": 135.79
+          "lat": 36.33,
+          "lon": 135.12
         },
         {
           "i": 9,
-          "lat": 36.44,
-          "lon": 135.53
+          "lat": 36.38,
+          "lon": 134.88
         },
         {
           "i": 10,
           "lat": 36.43,
-          "lon": 135.29
+          "lon": 134.65
         },
         {
           "i": 11,
-          "lat": 36.41,
-          "lon": 135.04
+          "lat": 36.47,
+          "lon": 134.42
         },
         {
           "i": 12,
-          "lat": 36.4,
-          "lon": 134.8
+          "lat": 36.5,
+          "lon": 134.2
         },
         {
           "i": 13,
-          "lat": 36.39,
-          "lon": 134.55
+          "lat": 36.52,
+          "lon": 133.97
         },
         {
           "i": 14,
-          "lat": 36.37,
-          "lon": 134.31
+          "lat": 36.52,
+          "lon": 133.74
         },
         {
           "i": 15,
-          "lat": 36.34,
-          "lon": 134.08
+          "lat": 36.52,
+          "lon": 133.51
         },
         {
           "i": 16,
-          "lat": 36.32,
-          "lon": 133.84
+          "lat": 36.51,
+          "lon": 133.3
         },
         {
           "i": 17,
-          "lat": 36.31,
-          "lon": 133.62
+          "lat": 36.5,
+          "lon": 133.13
         },
         {
           "i": 18,
-          "lat": 36.3,
-          "lon": 133.4
-        },
-        {
-          "i": 19,
-          "lat": 36.31,
-          "lon": 133.17
-        },
-        {
-          "i": 20,
-          "lat": 36.32,
-          "lon": 132.94
-        },
-        {
-          "i": 21,
-          "lat": 36.34,
-          "lon": 132.71
-        },
-        {
-          "i": 22,
-          "lat": 36.37,
-          "lon": 132.5
-        },
-        {
-          "i": 23,
-          "lat": 36.39,
-          "lon": 132.33
-        },
-        {
-          "i": 24,
-          "lat": 36.4,
-          "lon": 132.2,
-          "time": "2026-08-12T15:00:00+00:00",
+          "lat": 36.5,
+          "lon": 133.0,
+          "time": "2026-08-12T12:00:00+00:00",
           "intensity": "Low Pressure Area",
-          "wind": "40km/h"
+          "wind": "25km/h"
         }
       ]
     }
