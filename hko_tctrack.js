@@ -5,72 +5,7 @@
  * The page shows bulletinTime and generatedAt separately: staleness is
  * always visible, never hidden. */
 const HK_TCTRACK = {
-  "generatedAt": "2026-08-12T14:04:59+00:00",
+  "generatedAt": "2026-08-13T02:44:22+00:00",
   "source": "HKO tc_list.xml + hko_tctrack_{TCID}.xml on www.weather.gov.hk (no CORS headers; ingested every 30 min by GitHub Actions)",
-  "storms": [
-    {
-      "id": "2623",
-      "nameEn": "CHAN-HOM",
-      "nameZh": "燦鴻",
-      "bulletinTime": "2026-08-12T10:00:28+08:00",
-      "analysis": {
-        "lat": 35.8,
-        "lon": 135.8,
-        "time": "2026-08-12T00:00:00+00:00",
-        "intensity": "Low Pressure Area",
-        "wind": "40km/h"
-      },
-      "past": [
-        {
-          "i": 1,
-          "lat": 36.7,
-          "lon": 145.7,
-          "time": "2026-08-10T18:00:00+00:00",
-          "intensity": "Tropical Storm",
-          "wind": "75km/h"
-        },
-        {
-          "i": 2,
-          "lat": 36.9,
-          "lon": 143.7,
-          "time": "2026-08-11T00:00:00+00:00",
-          "intensity": "Tropical Storm",
-          "wind": "85km/h"
-        },
-        {
-          "i": 3,
-          "lat": 36.5,
-          "lon": 142.0,
-          "time": "2026-08-11T06:00:00+00:00",
-          "intensity": "Tropical Storm",
-          "wind": "85km/h"
-        },
-        {
-          "i": 4,
-          "lat": 36.0,
-          "lon": 140.6,
-          "time": "2026-08-11T12:00:00+00:00",
-          "intensity": "Tropical Storm",
-          "wind": "75km/h"
-        },
-        {
-          "i": 5,
-          "lat": 35.8,
-          "lon": 138.9,
-          "time": "2026-08-11T15:00:00+00:00",
-          "intensity": "Tropical Storm",
-          "wind": "65km/h"
-        },
-        {
-          "i": 6,
-          "lat": 35.7,
-          "lon": 137.1,
-          "time": "2026-08-11T18:00:00+00:00",
-          "intensity": "Tropical Depression",
-          "wind": "55km/h"
-        }
-      ],
-      "forecast": []
-    }
-  ]
+  "storms": []
 };
