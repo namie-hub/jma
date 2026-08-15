@@ -1,5 +1,5 @@
 # Japan Weather/Disaster Atlas — hand-authored source integrity record
-# Generated: 2026-08-15 14:29 UTC by scripts/make_manifest.sh
+# Generated: 2026-08-15 14:48 UTC by scripts/make_manifest.sh
 #
 # EXCLUDED by design (Actions-owned, rewritten by the ingest workflows):
 #   hko_tctrack.js  jma_early.js  jma_nankai.js  jma_phenology.js
@@ -18,7 +18,7 @@ fe097f4e1077bef4ea0210f8aa806b7f3b4f21e65c6ad4ab8cd1f58b7cf2c12d  .github/workfl
 b2d2b5fdfb0c2265c35556a09ec794dd85f28baf20f6cf7e35818199d410bfca  README-DEPLOY.md
 b8e57ddbe3c863e746c6c5b67a11a240e374abe99e78708127f39a814659cdee  README.md
 7c3b0dbbb0799c8721fe32f2cf0214ac34889a2e439901bc2f0501f97e05b949  index.html
-12978ad0d636f35cf96274c5aa106f257802767b5331252266c2adcf81ac3c6e  japan_disaster_jma.html
+8ead305cad1ab7ed7369151212465f2ecdbbd2b9d87f326d801e93a92219e297  japan_disaster_jma.html
 7c3b0dbbb0799c8721fe32f2cf0214ac34889a2e439901bc2f0501f97e05b949  japan_weather_jma.html
 2d79e79f3bcb147f64ef682d5483662c88626b4ca01313af089f4e3a598c1158  jma_cities.js
 7712714e286aabda7917e85323f2f9230bec9427808e0e60b0465ddbcc19d828  jma_pressure.js
