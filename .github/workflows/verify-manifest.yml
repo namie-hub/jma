@@ -42,9 +42,15 @@ on:
 permissions:
   contents: write
 
+# A web-UI deployment is inherently a BURST of pushes (the UI commits one
+# directory at a time), and only the final tree state matters. Superseded
+# runs are cancelled rather than queued: a cancelled run sends no failure
+# email, where the queued run for an intermediate commit raced the winner's
+# heal push, hit a rebase conflict on MANIFEST.sha256, and went red — the
+# b623e59 failure of 2026-08-15.
 concurrency:
   group: verify-manifest
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   verify:
@@ -52,6 +58,12 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
+        with:
+          # Heal against the branch TIP, not the triggering SHA. During an
+          # upload burst the triggering commit is stale within seconds, and
+          # a heal computed against it conflicts with the heal that already
+          # landed for a sibling push.
+          ref: main
 
       - name: Parser contract tests (the real gate — regeneration cannot bless a broken script)
         run: python3 -m unittest discover -s tests
@@ -94,10 +106,26 @@ jobs:
           git config user.email "actions@users.noreply.github.com"
           git add $changed
           git commit -m "Manifest/bundle self-heal:$changed"
-          ok=""
+          # Idempotent push loop. The naive version (pull --rebase and retry)
+          # is exactly what failed on b623e59: two queued runs both healed,
+          # both edited MANIFEST.sha256, the loser's rebase conflicted and
+          # the loop retried into a broken rebase state three times. Instead:
+          # on rejection, discard local state wholesale, resync to origin,
+          # REGENERATE (make_manifest.sh and build_release_zip.py are
+          # deterministic), and only commit if the fresh tree still needs it.
           for i in 1 2 3; do
-            if git push; then ok=1; break; fi
-            echo "push rejected (attempt $i) — rebasing onto origin/main"
-            git pull --rebase origin main
+            if git push; then echo "healed on attempt $i"; exit 0; fi
+            echo "push rejected (attempt $i) — resyncing and regenerating"
+            git rebase --abort 2>/dev/null || true
+            git fetch origin main
+            git reset --hard origin/main
+            bash scripts/make_manifest.sh
+            python3 scripts/build_release_zip.py
+            if git diff --quiet -- MANIFEST.sha256 japan-weather-atlas.zip; then
+              echo "another run already healed this state — nothing left to do"
+              exit 0
+            fi
+            git add MANIFEST.sha256 japan-weather-atlas.zip
+            git commit -m "Manifest/bundle self-heal (retry $i)"
           done
-          [ -n "$ok" ] || { echo "push failed after 3 attempts" >&2; exit 1; }
+          echo "push failed after 3 resync attempts" >&2; exit 1
