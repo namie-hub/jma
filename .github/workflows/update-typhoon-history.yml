@@ -22,6 +22,11 @@ jobs:
             echo "Typhoon history unchanged — no commit."
             exit 0
           fi
+          # The ONE scheduled bundle refresh: weekly, so the offline zip's
+          # data snapshot is never more than a week old at ~482 KB/week of
+          # history (vs ~23 MB/day when every ingest rebuilt it).
+          python3 scripts/build_release_zip.py
+          git add japan-weather-atlas.zip
           git config user.name "atlas-bot"
           git config user.email "actions@users.noreply.github.com"
           git commit -m "Typhoon history update"

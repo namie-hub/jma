@@ -1,27 +1,35 @@
 # .github/workflows/verify-manifest.yml
 #
-# Two checks, deliberately separate — one alone is not enough:
+# RESTRUCTURED from gate to self-heal, and here is why.
 #
-#   1. Tree matches the COMMITTED manifest. Run first, before any
-#      regeneration. Catches a hand-edited source file whose hash was never
-#      updated. This is the check that fails when someone edits a page and
-#      forgets to re-run the generator.
+# The original design failed the run and printed "run make_manifest.sh and
+# commit the result" — an instruction addressed to someone with a local git
+# checkout and a shell. This repo is maintained entirely through the GitHub
+# web UI: there is no local clone, and no way to run the script it demanded.
+# So every legitimate hand edit turned the check red, the fix required
+# hand-assembling a manifest out-of-band, and the check trained its only
+# reader to expect red. A gate that cannot be satisfied from the maintainer's
+# actual workflow is not a gate, it is noise — the exact failure mode
+# make_manifest.sh's own header warns about ("a record that cannot pass is a
+# record nobody runs"). It happened twice in one week.
 #
-#   2. The committed manifest is COMPLETE. Regenerate, then compare. Catches
-#      a new source file that was never added, or a deleted one still listed.
+# New shape:
+#   1. Parser contract tests run FIRST and can genuinely fail. These are the
+#      real gate: a broken ingest script is a finding no regeneration can
+#      bless away.
+#   2. The manifest and release bundle are REGENERATED and, if changed,
+#      committed back by the workflow. The manifest stops being a tripwire
+#      and becomes an audit trail: the bot's commit diff shows exactly which
+#      hashes a hand edit changed, reviewable after the fact.
 #
-# Why not regenerate-then-verify (the obvious one-liner): regeneration writes
-# the manifest FROM the tree, so the subsequent verify matches by
-# construction and can never fail. It looks green forever while detecting
-# nothing.
+# What is lost: a hand-corrupted source file is now blessed rather than
+# flagged, because regeneration hashes whatever the tree contains. That
+# trade is accepted deliberately — the sole author's uploads ARE the
+# intended state, and the protection that matters (a truncated or partial
+# upload) still surfaces, as a visible hash change in the bot's commit.
 #
-# The header carries a generation timestamp that changes on every run, so
-# check 2 compares only the non-comment lines — the same volatile-field
-# strip that atlas-ingest.yml applies to generatedAt before diffing.
-#
-# Actions-owned files (hko_tctrack.js, jma_nankai.js, jma_phenology.js,
-# jma_typhoon_history.js, archive/*) are excluded by make_manifest.sh, so bot
-# commits never trip this. Only hand edits do.
+# Loop safety: pushes made with GITHUB_TOKEN do not trigger workflows, so
+# the self-heal commit cannot re-trigger this run.
 
 name: Verify Manifest
 
@@ -29,9 +37,14 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
+  pull_request:
 
 permissions:
-  contents: read
+  contents: write
+
+concurrency:
+  group: verify-manifest
+  cancel-in-progress: false
 
 jobs:
   verify:
@@ -40,17 +53,51 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
 
-      - name: Tree matches the committed manifest
-        run: sha256sum -c MANIFEST.sha256
+      - name: Parser contract tests (the real gate — regeneration cannot bless a broken script)
+        run: python3 -m unittest discover -s tests
 
-      - name: Committed manifest is complete and current
+      - name: Regenerate manifest and release bundle
         run: |
-          cp MANIFEST.sha256 /tmp/committed.sha256
           bash scripts/make_manifest.sh
-          if ! diff <(grep -v '^#' /tmp/committed.sha256) \
-                    <(grep -v '^#' MANIFEST.sha256); then
-            echo "::error::MANIFEST.sha256 is out of date." >&2
-            echo "Run 'bash scripts/make_manifest.sh' and commit the result." >&2
-            exit 1
+          python3 scripts/build_release_zip.py
+
+      - name: Report and commit whatever changed (audit trail, not tripwire)
+        run: |
+          # Volatile header lines (generation timestamps) are not changes.
+          strip() { grep -v '^#' "$1" || true; }
+          changed=""
+          if git show HEAD:MANIFEST.sha256 > /tmp/old.sha 2>/dev/null \
+             && diff <(strip /tmp/old.sha) <(strip MANIFEST.sha256) > /dev/null; then
+            git checkout -- MANIFEST.sha256
+            echo "Manifest unchanged."
+          else
+            changed="$changed MANIFEST.sha256"
+            echo "Manifest entries changed by this push:"
+            diff <(strip /tmp/old.sha 2>/dev/null) <(strip MANIFEST.sha256) || true
           fi
-          echo "Manifest is complete and current."
+          if git diff --quiet -- japan-weather-atlas.zip; then
+            echo "Release bundle unchanged."
+          else
+            changed="$changed japan-weather-atlas.zip"
+            echo "Release bundle rebuilt (source inside it changed)."
+          fi
+          if [ -z "$changed" ]; then
+            echo "Nothing to heal — tree, manifest and bundle all agree."
+            exit 0
+          fi
+          # PRs get the report above but no push — the heal lands on main.
+          if [ "${GITHUB_EVENT_NAME}" = "pull_request" ]; then
+            echo "Pull request: reporting only, not committing."
+            exit 0
+          fi
+          git config user.name  "atlas-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add $changed
+          git commit -m "Manifest/bundle self-heal:$changed"
+          ok=""
+          for i in 1 2 3; do
+            if git push; then ok=1; break; fi
+            echo "push rejected (attempt $i) — rebasing onto origin/main"
+            git pull --rebase origin main
+          done
+          [ -n "$ok" ] || { echo "push failed after 3 attempts" >&2; exit 1; }

@@ -107,6 +107,13 @@ jobs:
             echo "No data changed — no commit."
             exit 0
           fi
+          # The release bundle is deliberately NOT rebuilt here. Ingest runs
+          # 48x/day and zip compression defeats git delta reuse, so every rebuild
+          # is a fresh ~482 KB blob in permanent history (~23 MB/day during a
+          # typhoon). The bundle's data snapshot instead refreshes weekly
+          # (update-typhoon-history.yml) and whenever hand-authored source
+          # changes (verify-manifest.yml self-heal). RELEASE.sha256 inside
+          # the bundle states exactly which snapshot it carries.
           git config user.name  "atlas-bot"
           git config user.email "actions@users.noreply.github.com"
           for f in $changed; do [ "$f" = archive ] || git add "$f"; done
