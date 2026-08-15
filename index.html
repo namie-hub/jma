@@ -119,7 +119,10 @@
     justify-content:space-between;gap:10px;flex-wrap:wrap}
 
   #panel{width:var(--panel-w);max-width:92vw;background:#fff;border-left:1px solid var(--line);
-    transform:translateX(100%);transition:transform .22s ease;
+    /* closed = fully off-canvas INCLUDING the desktop skin's 12px inset and
+       its leftward box-shadow — translateX(100%) alone left a 12px sliver of
+       the panel parked along the right edge */
+    transform:translateX(calc(100% + 80px));transition:transform .22s ease;
     position:absolute;right:0;top:0;bottom:0;z-index:1100;
     display:flex;flex-direction:column;box-shadow:-4px 0 16px rgba(20,35,55,.12)}
   #panel.open{transform:translateX(0)}
@@ -260,7 +263,7 @@
   #modebar button{min-width:72px;border-radius:11px;padding:8px 11px;transition:background .16s ease,transform .16s ease}
   #modebar button:hover{transform:translateY(-1px)}
   #modebar button.active{background:linear-gradient(145deg,var(--navy-2),var(--navy));box-shadow:0 5px 12px rgba(16,42,67,.2)}
-  .mapHint{position:absolute;left:18px;bottom:18px;z-index:900;background:rgba(16,42,67,.88);color:#fff;border:1px solid rgba(255,255,255,.18);border-radius:10px;padding:8px 12px;font-size:.72rem;box-shadow:0 6px 18px rgba(16,42,67,.24);backdrop-filter:blur(9px);pointer-events:none}
+  .mapHint{position:absolute;left:18px;bottom:calc(18px + var(--forecast-dock-clearance,0px));transition:bottom .2s ease;z-index:900;background:rgba(16,42,67,.88);color:#fff;border:1px solid rgba(255,255,255,.18);border-radius:10px;padding:8px 12px;font-size:.72rem;box-shadow:0 6px 18px rgba(16,42,67,.24);backdrop-filter:blur(9px);pointer-events:none}
   .wx-chip{border-width:1px;border-radius:12px;padding:6px 10px 6px 7px;box-shadow:0 5px 15px rgba(20,35,55,.18);font-size:13px;background:rgba(255,255,255,.96)}
   .wx-chip:hover{transform:translateY(-2px) scale(1.04)}
   #panel{top:12px;right:12px;bottom:12px;border:1px solid rgba(16,42,67,.1);border-radius:20px;overflow:hidden;box-shadow:-8px 18px 45px rgba(15,39,64,.22);background:rgba(255,255,255,.97);backdrop-filter:blur(16px)}
