@@ -79,6 +79,7 @@ jobs:
           fails=""
           python3 scripts/ingest_hko_tctrack.py          || fails="$fails hko"
           python3 scripts/ingest_nankai.py jma_nankai.js || fails="$fails nankai"
+          python3 scripts/ingest_early_warning.py jma_early.js || fails="$fails early"
           python3 scripts/archive_typhoon_forecasts.py archive || fails="$fails archiver"
           echo "fails=${fails# }" >> "$GITHUB_OUTPUT"
 
@@ -88,7 +89,7 @@ jobs:
           # file is simply unchanged here and the healthy legs still commit.
           strip() { grep -v '"generatedAt"' "$1" | grep -v '"generated"' || true; }
           changed=""
-          for f in hko_tctrack.js jma_nankai.js; do
+          for f in hko_tctrack.js jma_nankai.js jma_early.js; do
             if git show "HEAD:$f" > /tmp/old.js 2>/dev/null \
                && diff <(strip /tmp/old.js) <(strip "$f") > /dev/null; then
               git checkout -- "$f" 2>/dev/null || true   # discard timestamp-only rewrite
