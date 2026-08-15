@@ -15,6 +15,7 @@
 <script src="jma_cities.js"></script>
 <script src="jma_pressure.js"></script>
 <script src="jma_nankai.js"></script><!-- Actions-latched 南海トラフ status (atlas-ingest.yml, every 30 min); page degrades to live-feed-only if absent -->
+<script src="jma_early.js"></script><!-- 警戒レベル1 早期注意情報, Actions-ingested (atlas-ingest.yml); page degrades to levels 2-5 only if absent -->
 
 <style>
   :root{
@@ -95,6 +96,13 @@
   .wn-chip.dgr{border-color:#A50021;background:#F7DDE3;color:#6B0016;font-weight:700}
   .wn-chip.emg{border-color:#0C0C0C;background:#2B2B2B;color:#fff;font-weight:700}
   .wn-chip .wn-sub{margin-left:4px;font-size:.72rem;opacity:.7;font-weight:600}
+  /* Level 1 is a FORECAST. Dashed border and italics are doing real work
+     here: at a glance, on a phone, in the rain, this must not be mistakable
+     for a solid-bordered chip that means something is actually in force. */
+  .wn-chip.l1{border-color:#4A7C8C;border-style:dashed;background:#EAF3F7;
+    color:#26525F;font-style:italic;font-weight:600}
+  .l1seg{color:#26525F}
+  .wTag.l1tag{font-style:italic}
   /* Freshness verdicts. A number with no timestamp is what carried the
      stale-feed failure through undetected, so every derived count wears one. */
   .ffresh{opacity:.65;font-weight:400}
@@ -460,12 +468,19 @@ const FCODE = {
  * `rank` exists because level numbers are not contiguous (there is no 1). */
 const LV = {
   0:{cls:"none",tag:"#8A94A0",fill:"#8A94A0",txt:"#fff",     rank:0, label:"No warnings 発表なし"},
+  /* Level 1 is in the ladder but is NOT the same kind of thing as 2-5.
+   * Those are declarations about what IS in force; level 1 is a forecast
+   * that a 警報 MAY be issued in a stated window. It gets rank 0.5 so it
+   * sorts above "nothing" and below any real warning, and a colour that
+   * reads as provisional rather than as a weaker shade of 注意報. Every
+   * surface that renders it also marks it dashed — see .wn-chip.l1. */
+  1:{cls:"l1",  tag:"#4A7C8C",fill:"#7FB2C9",txt:"#fff",     rank:0.5, label:"Level 1 早期注意情報 Possibility"},
   2:{cls:"adv", tag:"#D9A400",fill:"#F2E700",txt:"#1E2A3A",  rank:1, label:"Level 2 注意報 Advisory"},
   3:{cls:"wrn", tag:"#D03A2A",fill:"#FF2800",txt:"#fff",     rank:2, label:"Level 3 警報 Warning"},
   4:{cls:"dgr", tag:"#8A2BE2",fill:"#A50021",txt:"#fff",     rank:3, label:"Level 4 危険警報 Urgent warning"},
   5:{cls:"emg", tag:"#161616",fill:"#0C0C0C",txt:"#fff",     rank:4, label:"Level 5 特別警報 Emergency"}
 };
-const LV_ORDER = [0,2,3,4,5];
+const LV_ORDER = [0,1,2,3,4,5];
 /* An unknown code must never vanish. JMA added a whole level-4 family in one
  * afternoon; the next addition should surface as "unrecognised", not as
  * silence. Level is guessed from the code's shape only to place it on the
@@ -561,7 +576,13 @@ const FEEDS = {
   warning: {label:"警報・注意報 warnings", maxAgeH:30,  time:null, ok:null, note:""},
   flood:   {label:"指定河川洪水予報 flood", maxAgeH:36,  time:null, ok:null, note:""},
   rainInfo:{label:"気象情報 rain bulletins", maxAgeH:6,  time:null, ok:null, note:""},
-  risk:    {label:"キキクル risk mesh",      maxAgeH:2,  time:null, ok:null, note:""}
+  risk:    {label:"キキクル risk mesh",      maxAgeH:2,  time:null, ok:null, note:""},
+  /* 早期注意情報 is issued twice daily (around 05:00 and 17:00 JST) plus
+   * updates, so the newest bulletin nationwide can legitimately be ~13 h old
+   * just before an issue time. 20 h is the quiet-day bound. Unlike the other
+   * entries this one measures an Actions-generated FILE, so a stale verdict
+   * means the ingest workflow died, not that JMA went quiet. */
+  early:   {label:"早期注意情報 level 1",     maxAgeH:20, time:null, ok:null, note:""}
 };
 function feedStamp(key, iso, extra){
   /* Three states, matching the conventions already used elsewhere on this
@@ -998,6 +1019,56 @@ function maxLevel(list){
   return lv;
 }
 
+/* ================= 警戒レベル1 早期注意情報 =================
+ * The only rung of the ladder that is a forecast rather than a declaration.
+ * JMA grades each 6- or 12-hour window 高 or 中, meaning "we may issue a 警報
+ * for this in that window". Nothing has happened yet, and the Atlas takes
+ * some care never to let it read as though something has.
+ *
+ * Ingested by scripts/ingest_early_warning.py rather than fetched here: the
+ * grading lives inside ~62 individual telegrams at ~23 kB each, so a browser
+ * doing this live would pull about 1.4 MB before colouring a single chip.
+ *
+ * Absent file = no level-1 layer, and the page says so rather than implying
+ * that nothing is forecast. `file://` use and a not-yet-run workflow both
+ * land here. */
+const earlyOK = (typeof JMA_EARLY !== "undefined" && JMA_EARLY && JMA_EARLY.areas);
+function earlyFor(region){
+  if (!earlyOK) return null;
+  return JMA_EARLY.areas[String(region)] || null;
+}
+function earlyRank(region){
+  const e = earlyFor(region);
+  return e ? e.worst : null;              // "高" | "中" | null
+}
+if (earlyOK){
+  feedStamp("early", JMA_EARLY.reportDatetime,
+    Object.keys(JMA_EARLY.areas).length + " sub-region(s) with a level-1 possibility"
+    + (JMA_EARLY.officesFailed ? " · " + JMA_EARLY.officesFailed + " office(s) failed at ingest" : ""));
+} else {
+  FEEDS.early.ok = false; FEEDS.early.time = null;
+  FEEDS.early.note = "jma_early.js not loaded — level 1 unavailable, levels 2-5 unaffected";
+}
+/* Windows are rendered from JMA's own 「１５日１２時から１８時」 strings rather
+ * than reformatted from the ISO stamp: they are already JST, already
+ * human, and rewriting them would be a chance to introduce a timezone bug
+ * for no gain. */
+function earlyRows(e){
+  if (!e) return "";
+  let html = "";
+  for (const k of (e.kinds || [])){
+    const worst = k.hits.some(h => h.rank === "高") ? "高" : "中";
+    const when = k.hits.map(h => esc(h.when || h.at)).join("、");
+    html += '<div class="wRow"><span class="wTag l1tag" style="background:' + LV[1].tag + '">'
+          + "可能性 " + worst + '</span><span><b>' + esc(k.jp) + "の警報級の可能性</b>"
+          + (k.unknown ? ' <span class="fdead">unrecognised element</span>' : "")
+          + "<br><small>" + esc(k.en) + " — JMA may issue a warning</small>"
+          + '<br><small style="opacity:.7">' + when + "</small></span></div>";
+  }
+  return html;
+}
+/* ================= end 警戒レベル1 ================= */
+
 /* class10 geometry, lazily fetched. JMA publishes class10 and class15
  * polygons but NOT class20, so municipality detail is listed rather than
  * mapped — stated plainly in the panel rather than faked from a third-party
@@ -1018,7 +1089,7 @@ async function loadClass10Geo(){
 function renderWarnings(){
   modeWarn.clearLayers();
   warnPolyLayer = null;
-  const count = {2:0, 3:0, 4:0, 5:0};
+  const count = {1:0, 2:0, 3:0, 4:0, 5:0};
   const levelByRegion = new Map();
   const listByRegion  = new Map();
 
@@ -1047,13 +1118,23 @@ function renderWarnings(){
     listByRegion.set(c.region, ws);
     if (count[lv] !== undefined) count[lv]++;
 
-    if (lv === 0 && !c.major) continue;        // quiet minor chips; majors anchor "all clear"
-    const badge = lv ? ("⚠ " + ws.length) : "○";
+    /* Level 1 never overrides a real warning: once something is in force,
+     * "a warning might be issued" is no longer the headline. It only claims
+     * a chip where the region is otherwise quiet — which is precisely the
+     * case the Atlas used to render as an unqualified all-clear. */
+    const er = earlyRank(c.region);
+    const showAsL1 = (lv === 0 && er);
+    if (showAsL1) count[1]++;
+
+    if (lv === 0 && !er && !c.major) continue;  // quiet minor chips; majors anchor "all clear"
+    const dlv   = showAsL1 ? 1 : lv;
+    const badge = showAsL1 ? "◇ " + er : (lv ? ("⚠ " + ws.length) : "○");
     const sub   = (lv && childCount && c20.scope === "region")
-      ? '<span class="wn-sub">' + childCount + "/" + childTotal + "</span>" : "";
+      ? '<span class="wn-sub">' + childCount + "/" + childTotal + "</span>"
+      : (!showAsL1 && er ? '<span class="wn-sub" title="level-1 possibility also in force">◇</span>' : "");
     const chip = L.divIcon({className:"", iconSize:null,
-      html:'<div class="wn-chip ' + LV[lv].cls + '">' + badge + " " + esc(c.jp) + sub + "</div>"});
-    L.marker([c.lat, c.lon], {icon:chip, zIndexOffset:LV[lv].rank * 100})
+      html:'<div class="wn-chip ' + LV[dlv].cls + '">' + badge + " " + esc(c.jp) + sub + "</div>"});
+    L.marker([c.lat, c.lon], {icon:chip, zIndexOffset:Math.round(LV[dlv].rank * 100)})
       .on("click", () => showWarnPanel(c, ws, lv))
       .addTo(modeWarn);
   }
@@ -1093,8 +1174,16 @@ function renderWarnings(){
     if (count[4]) parts.push(count[4] + " × L4 危険警報");
     if (count[3]) parts.push(count[3] + " × L3 警報");
     if (count[2]) parts.push(count[2] + " × L2 注意報");
+    /* Counted and phrased separately, never folded into the "active now"
+     * total: these regions have nothing in force. Saying "N active" and
+     * including a forecast in the number would be the same category error
+     * as showing a stale count without a timestamp. */
+    const l1seg = count[1]
+      ? ' · <span class="l1seg">' + count[1] + " × L1 早期注意情報 (forecast, nothing in force yet)</span>"
+        + staleBadge("early")
+      : (FEEDS.early.ok === false ? ' <span class="fstale">· level 1 unavailable</span>' : "");
     el.innerHTML = "Active now: " + (parts.length ? parts.join(" · ") : "nothing in force nationwide")
-      + staleBadge("warning")
+      + staleBadge("warning") + l1seg
       + (warnFailed ? ' <span class="fdead">· ' + warnFailed + " office(s) unreachable</span>" : "")
       + (class10GeoState === "failed" ? ' <span class="fstale">· area outlines unavailable, chips only</span>' : "");
   }
@@ -1171,6 +1260,25 @@ function showWarnPanel(c, names, lv){
     if (!names.length) html += '<p class="note">Nothing in force. This is a positive all-clear from JMA, not a missing answer.</p>';
     const order = [...names].sort((a, b) => LV[b.info.lv].rank - LV[a.info.lv].rank);
     for (const x of order) html += warnRow(x);
+
+    /* Level 1 gets its own heading under its own rule. Putting it in the
+     * list above — even at the bottom — would invite reading it as a mild
+     * warning, when it is not a warning at all. */
+    const early = earlyFor(c.region);
+    if (early){
+      html += '<h3 style="margin-top:14px">Level 1 早期注意情報 <small style="font-weight:400;opacity:.7">'
+            + "(forecast — nothing in force)</small></h3>"
+            + '<p class="note">JMA expects it <b>may</b> need to issue a warning in the windows below. '
+            + "This is a possibility, not an observation and not a declaration.</p>"
+            + earlyRows(early);
+      if (early.text) html += '<p class="note">' + esc(early.text) + "</p>";
+      html += '<p class="note">早期注意情報（明後日まで） issued '
+            + (early.report ? jstFmt(early.report) : "—") + " by " + esc(early.office || "JMA")
+            + staleBadge("early") + ".</p>";
+    } else if (FEEDS.early.ok === false){
+      html += '<p class="note" style="margin-top:12px">Level 1 早期注意情報 is unavailable '
+            + "(" + esc(FEEDS.early.note) + "). Absence of a level-1 outlook here is a gap, not an all-clear.</p>";
+    }
 
     /* Municipality breakdown — Batch C's real payload. */
     const c20 = regionClass20(c);
@@ -1985,6 +2093,17 @@ function updateLiveBanner(){
    * admitted gap. */
   const warnDead = feedIsStale("warning");
   if (warnDead){ nAdv = nWrn = nDgr = nEmg = 0; }
+  /* Level 1 counted only where nothing is in force — the same rule the map
+   * uses, so banner and chips can never disagree about what a region is. */
+  let nEarly = 0;
+  if (!warnDead && earlyOK){
+    for (const c of CITIES){
+      const w = regionWarnings(c);
+      if (w === null || maxLevel(w) !== 0) continue;
+      if (earlyRank(c.region)) nEarly++;
+    }
+  }
+  const l1Seg = nEarly ? ' · <i>' + nEarly + " at L1 (forecast)</i>" : "";
   const ty = activeTyphoons.length ? "🌀 " + activeTyphoons.map(t => t.label).join(" · ") + " · " : "";
   const ts = tsunamiStatus();
   const qk = quakeStatus();
@@ -2044,10 +2163,18 @@ function updateLiveBanner(){
     if (nDgr) bits.push(nDgr + " × L4 危険警報");
     if (nWrn) bits.push(nWrn + " × L3 警報");
     el.innerHTML = nkSeg + tsSeg + qkSeg + rnSeg + ty + "⚠ <b>" + bits.join(" · ")
-      + "</b>" + (nAdv ? " · " + nAdv + " × L2" : "") + " — tap to view" + pipeSeg;
+      + "</b>" + (nAdv ? " · " + nAdv + " × L2" : "") + l1Seg + " — tap to view" + pipeSeg;
   }else if (nAdv || ty || ts || qk || nk || rn){
     el.innerHTML = nkSeg + tsSeg + qkSeg + rnSeg + ty + "<b>" + nAdv
-      + " sub-regions at L2 注意報</b> — tap to view" + pipeSeg;
+      + " sub-regions at L2 注意報</b>" + l1Seg + " — tap to view" + pipeSeg;
+  }else if (nEarly){
+    /* Nothing in force anywhere, but JMA is flagging that something may be
+     * coming. This used to render as a flat green all-clear, which is true
+     * and yet not the whole answer. */
+    el.style.borderLeftColor = "#4A7C8C";
+    el.innerHTML = "○ Nothing in force nationwide" + staleBadge("warning")
+      + " · <i>" + nEarly + " sub-regions under レベル1 早期注意情報 (forecast)</i>"
+      + " — tap to view" + pipeSeg;
   }else{
     el.innerHTML = "○ No warnings or advisories in force nationwide" + staleBadge("warning") + pipeSeg
       + (nankaiLiveErr && !nankaiLiveOk ? " · <span style=\"opacity:.7\">南海トラフ status unverified — feed unreachable</span>" : "");
@@ -2117,6 +2244,8 @@ function updateLegend(){
       + '<div class="row"><span class="sw" style="background:#F7DDE3;border-color:#A50021"></span>レベル4 危険警報 Urgent warning</div>'
       + '<div class="row"><span class="sw" style="background:#FDEDEA;border-color:#D03A2A"></span>レベル3 警報 Warning</div>'
       + '<div class="row"><span class="sw" style="background:#FFF8E0;border-color:#D9A400"></span>レベル2 注意報 Advisory</div>'
+      + '<div class="row"><span class="sw" style="background:#EAF3F7;border-color:#4A7C8C;border-style:dashed"></span>'
+      + '<i>◇ レベル1 早期注意情報 — forecast, nothing in force</i></div>'
       + '<div class="row"><span class="sw" style="background:#fff"></span>○ All clear (major cities only)</div>'
       + kkNote
       + '<span class="note">Level 4 危険警報 is new — it did not exist before JMA\'s 28 May 2026 reform, '
@@ -2126,7 +2255,12 @@ function updateLegend(){
       + 'anchor city; the number is how many items are in force, and the small figure beside it is how many '
       + 'municipalities in that prefecture are affected. Tap a chip for the municipality-by-municipality list.<br>'
       + '気象情報 opens the bulletins that arrive <i>before</i> a level upgrade — 線状降水帯, '
-      + '記録的短時間大雨情報, 指定河川洪水予報.</span>';
+      + '記録的短時間大雨情報, 指定河川洪水予報.<br>'
+      + '<b>Level 1 is different in kind from the rest.</b> Levels 2–5 say what <i>is</i> in force; '
+      + 'level 1 says JMA may issue a warning within a stated window, up to two days out — a forecast '
+      + 'of possibility, graded 高 or 中. It is drawn dashed and italic, counted separately, and never '
+      + 'placed over a region that already has something in force. A small ◇ beside a warning chip means '
+      + 'a level-1 outlook also exists; tap for it.</span>';
   }else if (curMode === "volcano"){
     L_.innerHTML = "<b>Eruption warnings 噴火警報</b>"
       + '<div class="row"><span class="sw" style="background:#FFE600"></span>Level 2 火口周辺規制</div>'
