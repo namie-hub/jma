@@ -1,5 +1,5 @@
 # Japan Weather/Disaster Atlas — hand-authored source integrity record
-# Generated: 2026-08-15 12:50 UTC by scripts/make_manifest.sh
+# Generated: 2026-08-15 12:54 UTC by scripts/make_manifest.sh
 #
 # EXCLUDED by design (Actions-owned, rewritten by the ingest workflows):
 #   hko_tctrack.js  jma_early.js  jma_nankai.js  jma_phenology.js
@@ -22,7 +22,7 @@ e8f040ece788558eca93da7b12d608023cd9e724dd151daf1bafd3b62072b4de  japan_disaster
 1cde467c85e15b78e66ca83399b61b4943953defba4b966af6f5697bbd48fac7  japan_weather_jma.html
 2d79e79f3bcb147f64ef682d5483662c88626b4ca01313af089f4e3a598c1158  jma_cities.js
 7712714e286aabda7917e85323f2f9230bec9427808e0e60b0465ddbcc19d828  jma_pressure.js
-53e924293d43a134f49bb60086608701f9f3ce495f91d1968aa394a72d0c885e  scripts/archive_typhoon_forecasts.py
+879987c77f35b1d19073c8b90c6bb0042d244ab9a311b3880078bbb5088c3892  scripts/archive_typhoon_forecasts.py
 959e7faf7a5f106df71de1c73821f6452037b3e911c8c6ce0d86c4dc3fe37fbf  scripts/build_release_zip.py
 49982e82570f141d2aa8573593ad4d85a2cee105ac09642b67c56344123c633c  scripts/check_feeds.js
 6cbe1f8b014b039a74d511fffd89c65d30d0676d7ece170338b31cb53963652f  scripts/ingest_early_warning.py
