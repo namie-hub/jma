@@ -295,6 +295,24 @@ async function probe(name, url, validate){
       return stale(newest ? newest.toISOString() : null, 36, "reportDatetime");
     }));
 
+  /* 防災情報XML regular feed — carries the level-1 product (VPFD61). Its own
+     <updated> moves constantly; what matters is that the PRODUCT still
+     exists under the title the ingest matches on. A rename here would make
+     ingest_early_warning.py exit non-zero, but this check names the cause
+     rather than leaving you to read a stack trace. */
+  checks.push(probe("防災情報XML regular feed (level-1 product present)",
+    "https://www.data.jma.go.jp/developer/xml/feed/regular.xml",
+    async r => {
+      const t = await r.text();
+      if (!/<feed[\s>]/.test(t)) return "not an Atom feed";
+      const m = t.match(/<updated>([^<]+)<\/updated>/);
+      if (!m) return "no feed <updated> element";
+      if (!t.includes("早期注意情報（明後日まで）"))
+        return "VPFD61 早期注意情報（明後日まで） absent from the feed — the level-1 "
+             + "product has been renamed or moved; ingest_early_warning.py will be writing nothing";
+      return stale(m[1], 6, "feed updated");
+    }));
+
   /* 防災情報XML — carries 線状降水帯 and 記録的短時間大雨情報, the earliest
      flood signals JMA emits. High-frequency feed: minutes, not hours. */
   checks.push(probe("防災情報XML extra feed (rain bulletins)",

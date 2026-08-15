@@ -10,9 +10,14 @@
 # is a record nobody runs. This makes regeneration a single command.
 #
 # Scope decision: Actions-owned generated files are EXCLUDED, not listed and
-# excused. hko_tctrack.js, jma_nankai.js, jma_phenology.js and
+# excused. hko_tctrack.js, jma_early.js, jma_nankai.js, jma_phenology.js and
 # jma_typhoon_history.js are rewritten by the ingest workflows — including
 # them guarantees a failing verify and trains you to ignore the output.
+#
+# Adding a new ingest means adding its output here. jma_early.js was caught
+# on its first manifest regeneration precisely because it was not: it landed
+# in the list, which would have failed verify-manifest on the very next
+# atlas-ingest commit.
 # archive/* is bot-appended for the same reason. japan-weather-atlas.zip is a
 # derived bundle of the pages, not a source.
 #
@@ -25,14 +30,15 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-GENERATED='^(hko_tctrack|jma_nankai|jma_phenology|jma_typhoon_history)\.js$'
+GENERATED='^(hko_tctrack|jma_early|jma_nankai|jma_phenology|jma_typhoon_history)\.js$'
 
 {
   echo "# Japan Weather/Disaster Atlas — hand-authored source integrity record"
   echo "# Generated: $(date -u '+%Y-%m-%d %H:%M UTC') by scripts/make_manifest.sh"
   echo "#"
   echo "# EXCLUDED by design (Actions-owned, rewritten by the ingest workflows):"
-  echo "#   hko_tctrack.js  jma_nankai.js  jma_phenology.js  jma_typhoon_history.js"
+  echo "#   hko_tctrack.js  jma_early.js  jma_nankai.js  jma_phenology.js"
+  echo "#   jma_typhoon_history.js"
   echo "#   archive/*  and the derived japan-weather-atlas.zip bundle."
   echo "# Everything below is hand-authored: a mismatch is a real finding."
   echo "#"
