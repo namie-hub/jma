@@ -19,12 +19,13 @@
 <script src="jma_early.js"></script><!-- 警戒レベル1 早期注意情報, Actions-ingested (atlas-ingest.yml); page degrades to levels 2-5 only if absent -->
 
 <style>
-  :root{--embed-clearance:0px}
+  :root{--embed-clearance:0px;--embed-footer:0px}
   /* Inside a wrapper, reserve room for its bottom bar: ~56px of bar plus the
    * home indicator. Trailing scroll space when the guess is generous is
    * invisible; content pinned under the bar when it is stingy is the bug in
    * the screenshot — so err large. */
-  html.embedded{--embed-clearance:calc(72px + env(safe-area-inset-bottom,0px))}
+  html.embedded{--embed-clearance:calc(72px + env(safe-area-inset-bottom,0px));
+    --embed-footer:calc(46px + env(safe-area-inset-bottom,0px))}  /* see weather page note */
 
   :root{
     --ink:#1E2A3A; --indigo:#24425F; --paper:#F5F7F8; --line:#D8DEE4;
@@ -270,7 +271,7 @@
     #qfilter,#tsuBanner{top:148px;left:10px;right:10px;transform:none;max-width:none}
     #qPending{top:200px;left:10px;right:10px;transform:none;max-width:none}
     #hfilter,#tyhfilter{top:148px!important;left:10px!important;right:10px!important;
-      transform:none!important;max-width:none!important;justify-content:flex-start!important}#modebar{top:10px;left:10px;right:10px;transform:none;justify-content:flex-start;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;-webkit-mask-image:linear-gradient(90deg,#000 92%,transparent);mask-image:linear-gradient(90deg,#000 92%,transparent)}#modebar::-webkit-scrollbar{display:none}#modebar button{min-width:67px;flex:0 0 auto;padding:7px 8px}#modebar button .me{font-size:.72rem}#modebar button .mj{font-size:.6rem}#panel{inset:0;width:100%;max-width:none;border-radius:0;border:none}#legend{left:8px;right:8px;bottom:calc(8px + var(--embed-clearance));max-width:none;max-height:38vh;overflow:auto}footer{padding:6px 10px calc(6px + var(--embed-clearance))}footer span{display:none}footer span.safety{display:block;font-size:.72rem;line-height:1.35}}
+      transform:none!important;max-width:none!important;justify-content:flex-start!important}#modebar{top:10px;left:10px;right:10px;transform:none;justify-content:flex-start;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;-webkit-mask-image:linear-gradient(90deg,#000 92%,transparent);mask-image:linear-gradient(90deg,#000 92%,transparent)}#modebar::-webkit-scrollbar{display:none}#modebar button{min-width:67px;flex:0 0 auto;padding:7px 8px}#modebar button .me{font-size:.72rem}#modebar button .mj{font-size:.6rem}#panel{inset:0;width:100%;max-width:none;border-radius:0;border:none}#legend{left:8px;right:8px;bottom:8px;max-width:none;max-height:38vh;overflow:auto}footer{padding:6px 10px calc(6px + var(--embed-footer))}footer span{display:none}footer span.safety{display:block;font-size:.72rem;line-height:1.35}}
 </style>
 </head>
 <body>
