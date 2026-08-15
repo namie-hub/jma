@@ -55,10 +55,31 @@ a static, no-build package that runs from a local `file://` open or any static w
 
 Both files must sit in the **same folder**.
 
+## Release bundle
+
+`japan-weather-atlas.zip` is a self-contained runtime bundle generated from
+the current pages and data files. Rebuild it after any manual page or data
+change with:
+
+    python3 scripts/build_release_zip.py
+
+The builder is deterministic, embeds `RELEASE.sha256`, and verifies every
+archived file against its source before returning. CI rejects a stale bundle,
+and the scheduled data workflows rebuild it whenever generated data changes.
+
 ## Running locally
 
-Double-click `index.html`. Use the Weather / Disaster switch in the header to move between atlases. That's it — it fetches live data directly from JMA
-and Open-Meteo, both of which send permissive CORS headers.
+Every page opens directly from `file://` — no build step, no server. But
+`file://` is not the same as *offline*: the map library and marker images are
+vendored locally (`vendor/`), so the shell and UI render with no network, and
+the pages state plainly which surfaces are dark — live feeds (warnings,
+quakes, radar tiles, forecasts) still require internet, because they are
+JMA's servers, not files.
+
+Leaflet is vendored rather than loaded from unpkg.com: a single third-party
+CDN outage or block previously meant the entire atlas failed to start, which
+is the wrong failure mode for a disaster page. This also finally aligns with
+the HK Atlas, which has vendored Leaflet from the start.
 
 ## Data sources & attribution
 
@@ -105,6 +126,20 @@ Two lessons are now built into the code rather than written down here:
    anywhere in Japan** (observed: 5 minutes old; bound: 6 h). Verified against
    the real retired endpoint — it fails correctly at 79 days, where the shape
    check passed.
+
+**CI shape (why the manifest workflow self-heals).** This repo is maintained
+entirely through the GitHub web UI — no local git, no local shell. A check
+that fails with "run this script locally and commit the result" can never be
+satisfied from that workflow, so it trains its only reader to expect red.
+`verify-manifest.yml` therefore runs the parser contract tests as the real
+gate (a broken script is a genuine finding), then regenerates
+`MANIFEST.sha256` and `japan-weather-atlas.zip` and commits them itself when
+they changed. The manifest becomes an audit trail — the bot's commit diff
+shows exactly which hashes a hand edit touched — rather than a tripwire that
+only the maintainer can trip. The release bundle refreshes weekly and on any
+source change, not on every ingest: zip compression defeats git delta reuse,
+and rebuilding a ~540 KB blob 48x/day was ~25 MB/day of permanent history
+during a typhoon.
 
 `check_feeds.js` also keeps a deliberately non-failing **canary** on the old
 path: if it ever starts moving again, that is reported, because it would mean

@@ -4,11 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Japan Weather Atlas — Live JMA Conditions & Travel Outlook</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🗾</text></svg>">
 <meta name="theme-color" content="#102a43">
 <meta name="description" content="A polished live atlas of Japan weather, forecasts, Amedas observations, pressure, snow, rain and typhoons using JMA data.">
 
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="stylesheet" href="vendor/leaflet.css">
+<script src="vendor/leaflet.js"></script><!-- vendored locally: unpkg.com was a single point of failure for the whole atlas, and HK Atlas already vendors -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
 
@@ -322,7 +323,7 @@
     #chartCard{max-width:96vw}
     #chartCard .bar{flex-wrap:wrap;gap:5px}
     #chartCard .bar h2{flex:1 0 100%;margin-bottom:2px}
-    footer{display:none}
+    footer{padding:6px 10px}footer span{display:none}footer span.safety{display:block;font-size:.72rem;line-height:1.35}
   }
   @media(max-width:640px) and (orientation:landscape){
     .legend{max-height:70vh}
@@ -527,7 +528,8 @@
   warnings can tell a quiet feed from a dead pipeline)</span>
   <span><b>Observations:</b> <span id="amedasTime">—</span></span>
   <span><b>Fetched:</b> <span id="fetchTime">—</span></span>
-  <span>These are the JSON feeds behind JMA's own site — reliable in practice, but not a documented public API; paths may change without notice.</span>
+  <span class="sources">These are the JSON feeds behind JMA's own site — reliable in practice, but not a documented public API; paths may change without notice.</span>
+  <span class="safety"><b>Not an emergency service</b> — for life-safety decisions use official <a href="https://www.jma.go.jp/bosai/" target="_blank" rel="noopener">JMA</a> / <a href="https://www3.nhk.or.jp/nhkworld/en/news/" target="_blank" rel="noopener">NHK</a> channels.</span>
 </footer>
 
 <script>

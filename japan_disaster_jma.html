@@ -4,10 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Japan Disaster Atlas — Live JMA Hazard Conditions</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🗾</text></svg>">
 
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+<link rel="stylesheet" href="vendor/leaflet.css">
+<script src="vendor/leaflet.js"></script><!-- vendored locally: unpkg.com was a single point of failure for the whole atlas, and HK Atlas already vendors -->
+<script src="vendor/leaflet-heat.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
 
@@ -262,14 +263,14 @@
     #qfilter,#tsuBanner{top:148px;left:10px;right:10px;transform:none;max-width:none}
     #qPending{top:200px;left:10px;right:10px;transform:none;max-width:none}
     #hfilter,#tyhfilter{top:148px!important;left:10px!important;right:10px!important;
-      transform:none!important;max-width:none!important;justify-content:flex-start!important}#modebar{top:10px;left:10px;right:10px;transform:none;justify-content:flex-start;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;-webkit-mask-image:linear-gradient(90deg,#000 92%,transparent);mask-image:linear-gradient(90deg,#000 92%,transparent)}#modebar::-webkit-scrollbar{display:none}#modebar button{min-width:67px;flex:0 0 auto;padding:7px 8px}#modebar button .me{font-size:.72rem}#modebar button .mj{font-size:.6rem}#panel{inset:0;width:100%;max-width:none;border-radius:0;border:none}#legend{left:8px;right:8px;bottom:8px;max-width:none;max-height:38vh;overflow:auto}footer{display:none}}
+      transform:none!important;max-width:none!important;justify-content:flex-start!important}#modebar{top:10px;left:10px;right:10px;transform:none;justify-content:flex-start;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;-webkit-mask-image:linear-gradient(90deg,#000 92%,transparent);mask-image:linear-gradient(90deg,#000 92%,transparent)}#modebar::-webkit-scrollbar{display:none}#modebar button{min-width:67px;flex:0 0 auto;padding:7px 8px}#modebar button .me{font-size:.72rem}#modebar button .mj{font-size:.6rem}#panel{inset:0;width:100%;max-width:none;border-radius:0;border:none}#legend{left:8px;right:8px;bottom:8px;max-width:none;max-height:38vh;overflow:auto}footer{padding:6px 10px}footer span{display:none}footer span.safety{display:block;font-size:.72rem;line-height:1.35}}
 </style>
 </head>
 <body>
 
 <header class="appHeader">
   <div class="brandBlock"><div class="brandMark" aria-hidden="true">防</div><div><h1>Japan Disaster Atlas</h1><div class="brandSub">Live JMA hazards · 気象庁 防災情報</div></div></div>
-  <div id="summary" class="liveSummary">—</div>
+  <div id="summary" class="liveSummary" role="status" aria-live="polite">—</div>
   <nav class="atlasSwitch" aria-label="Atlas sections"><a href="index.html">Weather</a><a class="active" href="japan_disaster_jma.html">Disaster</a></nav>
   <button type="button" id="refreshBtn" class="primaryBtn">↻ <span>Refresh</span></button>
 </header>
@@ -280,16 +281,16 @@
   </div>
 
   <div id="modebar" role="tablist" aria-label="Hazard view">
-    <button type="button" data-mode="quake" class="active"><span class="mi">✕</span><span class="me">Quakes</span><span class="mj">地震</span></button>
-    <button type="button" data-mode="warn"><span class="mi">⚠️</span><span class="me">Warnings</span><span class="mj">警報・注意報</span></button>
-    <button type="button" data-mode="volcano"><span class="mi">🌋</span><span class="me">Volcano</span><span class="mj">火山</span></button>
-    <button type="button" data-mode="tsunami"><span class="mi">🌊</span><span class="me">Tsunami</span><span class="mj">津波</span></button>
-    <button type="button" data-mode="typhoon"><span class="mi">🌀</span><span class="me">Typhoon</span><span class="mj">台風</span></button>
-    <button type="button" data-mode="tyhist"><span class="mi">🌪️</span><span class="me">Ty. tracks</span><span class="mj">台風の記録</span></button>
-    <button type="button" data-mode="history"><span class="mi">🔥</span><span class="me">History</span><span class="mj">地震履歴</span></button>
+    <button type="button" role="tab" aria-selected="true" data-mode="quake" class="active"><span class="mi">✕</span><span class="me">Quakes</span><span class="mj">地震</span></button>
+    <button type="button" role="tab" aria-selected="false" data-mode="warn"><span class="mi">⚠️</span><span class="me">Warnings</span><span class="mj">警報・注意報</span></button>
+    <button type="button" role="tab" aria-selected="false" data-mode="volcano"><span class="mi">🌋</span><span class="me">Volcano</span><span class="mj">火山</span></button>
+    <button type="button" role="tab" aria-selected="false" data-mode="tsunami"><span class="mi">🌊</span><span class="me">Tsunami</span><span class="mj">津波</span></button>
+    <button type="button" role="tab" aria-selected="false" data-mode="typhoon"><span class="mi">🌀</span><span class="me">Typhoon</span><span class="mj">台風</span></button>
+    <button type="button" role="tab" aria-selected="false" data-mode="tyhist"><span class="mi">🌪️</span><span class="me">Ty. tracks</span><span class="mj">台風の記録</span></button>
+    <button type="button" role="tab" aria-selected="false" data-mode="history"><span class="mi">🔥</span><span class="me">History</span><span class="mj">地震履歴</span></button>
   </div>
 
-  <button type="button" id="liveBanner" class="hidden"
+  <button type="button" id="liveBanner" class="hidden" role="status" aria-live="polite"
     style="position:absolute;top:132px;left:50%;transform:translateX(-50%);z-index:1001;
            border:1px solid var(--line);border-left:6px solid #2E8B57;border-radius:9px;
            background:#fff;padding:9px 16px;font-family:inherit;font-size:.92rem;font-weight:500;
@@ -352,7 +353,7 @@
   <div id="statusCard">Loading JMA disaster feeds…<small>気象庁 防災情報</small></div>
 
 
-  <aside id="panel" aria-label="Detail panel">
+  <aside id="panel" role="dialog" aria-modal="true" aria-labelledby="pTitle">
     <div class="phead"><h2 id="pTitle">—</h2>
       <button type="button" class="x" id="pMin" aria-label="Minimize panel" title="Collapse — keep readings on the map">–</button>
       <button type="button" class="x" id="pClose" aria-label="Close">×</button></div>
@@ -365,7 +366,7 @@
   api.github.com (read-only heartbeat of the latch workflow — run timestamps only, so a dead
   pipeline is announced instead of silently impersonating a quiet one)</span>
   <span><b>Fetched:</b> <span id="fetchTime">—</span></span>
-  <span>Same undocumented-but-stable JSON feeds as JMA's own site; paths may change without notice. Not an emergency service — for life-safety decisions use official JMA / NHK channels.</span>
+  <span class="safety">Same undocumented-but-stable JSON feeds as JMA's own site; paths may change without notice. <b>Not an emergency service</b> — for life-safety decisions use official <a href="https://www.jma.go.jp/bosai/" target="_blank" rel="noopener">JMA</a> / <a href="https://www3.nhk.or.jp/nhkworld/en/news/" target="_blank" rel="noopener">NHK</a> channels.</span>
 </footer>
 
 <script>
@@ -2320,7 +2321,10 @@ document.getElementById("modebar").addEventListener("click", e => {
   const btn = e.target.closest("button[data-mode]");
   if (!btn) return;
   curMode = btn.dataset.mode;
-  for (const b of document.querySelectorAll("#modebar button")) b.classList.toggle("active", b === btn);
+  for (const b of document.querySelectorAll("#modebar button")){
+    b.classList.toggle("active", b === btn);
+    b.setAttribute("aria-selected", String(b === btn));   // tablist pattern: tabs carry selection state
+  }
   for (const [k, layer] of Object.entries(MODES)){
     if (k === curMode){ if (!map.hasLayer(layer)) map.addLayer(layer); }
     else if (map.hasLayer(layer)) map.removeLayer(layer);
