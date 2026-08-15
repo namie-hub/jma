@@ -79,6 +79,6 @@ def main():
               (tc_id, issue, len(doc["snapshots"])))
 
     print("Done — %d file(s) updated." % changed)
-
+    
 if __name__ == "__main__":
     main()
