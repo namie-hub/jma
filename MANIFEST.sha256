@@ -1,5 +1,5 @@
 # Japan Weather/Disaster Atlas — hand-authored source integrity record
-# Generated: 2026-08-15 07:24 UTC by scripts/make_manifest.sh
+# Generated: 2026-08-15 07:30 UTC by scripts/make_manifest.sh
 #
 # EXCLUDED by design (Actions-owned, rewritten by the ingest workflows):
 #   hko_tctrack.js  jma_early.js  jma_nankai.js  jma_phenology.js
@@ -15,7 +15,6 @@ ec05b8c26bb38ff2485d028a7c94a812dac137f6ecd9db0fa2728ba7e3fc4be2  .github/workfl
 b3ecd1d322a450a940d6f1025a5ebd23e8eb0e4c7cbb1e1e4d62255303b63863  .github/workflows/update-phenology.yml
 96279758fb2f0fc74ca3f001ffb211baf02ff0d7e53238f158547a4d34075ee6  .github/workflows/update-typhoon-history.yml
 70a08755477775463e21892c18e76eacb69ab4c43acb696beb3f919a0ee15814  .github/workflows/verify-manifest.yml
-e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  .nojekyll
 b2d2b5fdfb0c2265c35556a09ec794dd85f28baf20f6cf7e35818199d410bfca  README-DEPLOY.md
 b8e57ddbe3c863e746c6c5b67a11a240e374abe99e78708127f39a814659cdee  README.md
 633b45ac0a9fa6189f60e8eead2dae90350f1c592c72e9681116779d0e687996  index.html
