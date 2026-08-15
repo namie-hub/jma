@@ -1948,6 +1948,69 @@ function kkHealth(){
     st.textContent = (e ? e.jp : "") + " loading… " + stamp;
   }
 }
+/* Nationwide warning index — every sub-region with anything in force or a
+ * level-1 outlook, one row each, worst first. Rows reuse regionWarnings and
+ * the class20 cache, so this is a re-presentation of state already computed
+ * for the chips, not a second pipeline that could disagree with them. */
+function showWarnList(){
+  const rows = [];
+  for (const c of CITIES){
+    const ws = regionWarnings(c);
+    if (ws === null) continue;
+    let lv = maxLevel(ws);
+    const c20 = regionClass20(c);
+    let childCount = 0, childTotal = 0;
+    if (c20 && c20.scope === "region"){
+      for (const [, l] of c20){
+        childTotal++;
+        const v = maxLevel(l);
+        if (v) childCount++;
+        if (LV[v].rank > LV[lv].rank) lv = v;
+      }
+    }
+    const er = earlyRank(c.region);
+    if (!lv && !er) continue;
+    rows.push({c, lv, er, ws, childCount, childTotal});
+  }
+  rows.sort((a, b) => LV[b.lv].rank - LV[a.lv].rank
+    || (b.er ? 1 : 0) - (a.er ? 1 : 0)
+    || String(a.c.region).localeCompare(String(b.c.region)));
+
+  let html = "";
+  if (feedIsStale("warning"))
+    html += '<div class="feedAlarm">⚠ The warning feed is stale — treat every row below as NOT current.</div>';
+  if (!rows.length){
+    html += '<p class="note">Nothing in force and no level-1 outlook anywhere. A real nationwide all-clear.</p>';
+  } else {
+    html += '<p class="note">Every sub-region with something in force or a level-1 outlook, worst first. Tap a row for its detail.</p>';
+    for (const r of rows){
+      const dlv = r.lv || 1;
+      const tag = r.lv ? wTagLabel(r.lv) : ("可能性 " + r.er);
+      const kinds = r.lv
+        ? r.ws.map(x => x.info.n).slice(0, 3).join("、") + (r.ws.length > 3 ? " 他" : "")
+        : "警報級の可能性 — forecast only, nothing in force";
+      const sub = (r.lv && r.childTotal) ? " · " + r.childCount + "/" + r.childTotal + " 市町村" : "";
+      const l1mark = (r.lv && r.er) ? " ◇" : "";
+      html += '<div class="wRow" role="button" tabindex="0" data-warnrow="' + esc(r.c.region) + '" style="cursor:pointer">'
+            + '<span class="wTag' + (r.lv ? '' : ' l1tag') + '" style="background:' + LV[dlv].tag + '">' + tag + "</span>"
+            + "<span><b>" + esc(r.c.jp) + "</b> <small>" + esc(r.c.regionJp) + l1mark + "</small>"
+            + "<br><small>" + esc(kinds) + esc(sub) + "</small></span></div>";
+    }
+  }
+  html += '<p class="note" style="margin-top:10px">' + rows.filter(r => r.lv).length
+        + " with something in force · " + rows.filter(r => !r.lv).length
+        + " at level 1 only" + staleBadge("warning") + "</p>";
+  openPanel("Nationwide 全国 警報・注意報", html);
+}
+/* Row taps are delegated once: the panel body is rewritten on every open,
+ * so per-row listeners would be lost. */
+document.getElementById("pBody").addEventListener("click", e => {
+  const row = e.target.closest("[data-warnrow]");
+  if (!row) return;
+  const c = CITIES.find(x => x.region === row.dataset.warnrow);
+  if (c) showWarnPanel(c, regionWarnings(c) || [], 0);
+});
+
 /* ================= end キキクル ================= */
 
 /* ================= rain bulletins 気象情報 (extra.xml) =================
@@ -2126,6 +2189,7 @@ function updateLiveBanner(){
     }
   }
   const l1Seg = nEarly ? ' · <i>' + nEarly + " at L1 (forecast)</i>" : "";
+  const warnCTA = curMode === "warn" ? "tap for full list" : "tap to view";
   const ty = activeTyphoons.length ? "🌀 " + activeTyphoons.map(t => t.label).join(" · ") + " · " : "";
   const ts = tsunamiStatus();
   const qk = quakeStatus();
@@ -2185,10 +2249,10 @@ function updateLiveBanner(){
     if (nDgr) bits.push(nDgr + " × L4 危険警報");
     if (nWrn) bits.push(nWrn + " × L3 警報");
     el.innerHTML = nkSeg + tsSeg + qkSeg + rnSeg + ty + "⚠ <b>" + bits.join(" · ")
-      + "</b>" + (nAdv ? " · " + nAdv + " × L2" : "") + l1Seg + " — tap to view" + pipeSeg;
+      + "</b>" + (nAdv ? " · " + nAdv + " × L2" : "") + l1Seg + " — " + warnCTA + pipeSeg;
   }else if (nAdv || ty || ts || qk || nk || rn){
     el.innerHTML = nkSeg + tsSeg + qkSeg + rnSeg + ty + "<b>" + nAdv
-      + " sub-regions at L2 注意報</b>" + l1Seg + " — tap to view" + pipeSeg;
+      + " sub-regions at L2 注意報</b>" + l1Seg + " — " + warnCTA + pipeSeg;
   }else if (nEarly){
     /* Nothing in force anywhere, but JMA is flagging that something may be
      * coming. This used to render as a flat green all-clear, which is true
@@ -2196,7 +2260,7 @@ function updateLiveBanner(){
     el.style.borderLeftColor = "#4A7C8C";
     el.innerHTML = "○ Nothing in force nationwide" + staleBadge("warning")
       + " · <i>" + nEarly + " sub-regions under レベル1 早期注意情報 (forecast)</i>"
-      + " — tap to view" + pipeSeg;
+      + " — " + warnCTA + pipeSeg;
   }else{
     el.innerHTML = "○ No warnings or advisories in force nationwide" + staleBadge("warning") + pipeSeg
       + (nankaiLiveErr && !nankaiLiveOk ? " · <span style=\"opacity:.7\">南海トラフ status unverified — feed unreachable</span>" : "");
@@ -2204,7 +2268,16 @@ function updateLiveBanner(){
   // Click target follows severity: Nankai advisory and tsunami route to their
   // authoritative views; a Nankai advisory routes to quake mode (no dedicated mode).
   const target = ts ? "tsunami" : ((qk || nk) ? "quake" : "warn");
-  el.onclick = () => document.querySelector('#modebar button[data-mode="' + target + '"]').click();
+  el.onclick = () => {
+    if (curMode !== target){
+      document.querySelector('#modebar button[data-mode="' + target + '"]').click();
+    } else if (target === "warn"){
+      /* Already in warn mode: "view" means the nationwide index, because the
+       * map is already on screen and re-selecting it is a no-op — the exact
+       * dead tap this branch replaces. */
+      showWarnList();
+    }
+  };
 }
 
 /* ================= earthquake history heatmap (USGS FDSN) ================= */
