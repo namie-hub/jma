@@ -82,6 +82,12 @@
     font-weight:700;padding:5px 10px;border-radius:6px;cursor:pointer;color:var(--ink)}
   #kkfilter button.active{background:#1E5FA8;color:#fff}
   #kkStatus{font-size:.72rem;color:#5A6570;max-width:min(320px,60vw)}
+  /* Collapse affordance exists only on phones. Desktop has the room for the
+     full row and gains nothing from an extra tap. */
+  #kkTog{display:none}
+  #kkfilter.collapsed button[data-kk],
+  #kkfilter.collapsed #rainBtn,
+  #kkfilter.collapsed #kkStatus{display:none}
 
   .leaflet-div-icon{background:transparent;border:none}
 
@@ -271,7 +277,7 @@
     #qfilter,#tsuBanner{top:148px;left:10px;right:10px;transform:none;max-width:none}
     #qPending{top:200px;left:10px;right:10px;transform:none;max-width:none}
     #hfilter,#tyhfilter{top:148px!important;left:10px!important;right:10px!important;
-      transform:none!important;max-width:none!important;justify-content:flex-start!important}#modebar{top:10px;left:10px;right:10px;transform:none;justify-content:flex-start;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;-webkit-mask-image:linear-gradient(90deg,#000 92%,transparent);mask-image:linear-gradient(90deg,#000 92%,transparent)}#modebar::-webkit-scrollbar{display:none}#modebar button{min-width:67px;flex:0 0 auto;padding:7px 8px}#modebar button .me{font-size:.72rem}#modebar button .mj{font-size:.6rem}#panel{inset:0;width:100%;max-width:none;border-radius:0;border:none}#legend{left:8px;right:8px;bottom:8px;max-width:none;max-height:38vh;overflow:auto}footer{padding:6px 10px calc(6px + var(--embed-footer))}footer span{display:none}footer span.safety{display:block;font-size:.72rem;line-height:1.35}}
+      transform:none!important;max-width:none!important;justify-content:flex-start!important}#modebar{top:10px;left:10px;right:10px;transform:none;justify-content:flex-start;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;-webkit-mask-image:linear-gradient(90deg,#000 92%,transparent);mask-image:linear-gradient(90deg,#000 92%,transparent)}#modebar::-webkit-scrollbar{display:none}#modebar button{min-width:67px;flex:0 0 auto;padding:7px 8px}#modebar button .me{font-size:.72rem}#modebar button .mj{font-size:.6rem}#panel{inset:0;width:100%;max-width:none;border-radius:0;border:none}#legend{left:8px;right:8px;bottom:8px;max-width:none;max-height:38vh;overflow:auto}#kkfilter{top:auto;bottom:52px;left:8px;right:8px;transform:none;max-width:none;justify-content:flex-start}#kkTog{display:inline-flex;align-items:center;gap:4px;font-weight:800}footer{padding:6px 10px calc(6px + var(--embed-footer))}footer span{display:none}footer span.safety{display:block;font-size:.72rem;line-height:1.35}}
 </style>
 </head>
 <body>
@@ -347,6 +353,7 @@
        rather than "has it been declared". Off by default: it is a heavy tile
        layer and the chips must stay legible on first paint. -->
   <div id="kkfilter" class="hidden" aria-label="Kikikuru risk mesh layer">
+    <button type="button" id="kkTog" aria-expanded="true">&#9656; <span id="kkTogLbl">メッシュ Risk mesh</span></button>
     <button type="button" data-kk="off" class="active">Mesh off</button>
     <button type="button" data-kk="land">土砂 Landslide</button>
     <button type="button" data-kk="inund">浸水 Inundation</button>
@@ -2383,13 +2390,37 @@ document.getElementById("kkfilter").addEventListener("click", e => {
   for (const b of document.querySelectorAll("#kkfilter button[data-kk]")) b.classList.toggle("active", b === btn);
   applyKikikuru();
   updateLegend();
+  updateKkTog();
+  // Choosing an element is a completed action on a phone: collapse back to
+  // the pill so the map the choice just painted is actually visible.
+  if (kkNarrow.matches) { document.getElementById("kkfilter").classList.add("collapsed"); updateKkTog(); }
 });
+
+const kkTog = document.getElementById("kkTog");
+const kkNarrow = window.matchMedia("(max-width:760px)");
+if (kkNarrow.matches) document.getElementById("kkfilter").classList.add("collapsed");
+function updateKkTog(){
+  const el = document.getElementById("kkfilter");
+  const open = !el.classList.contains("collapsed");
+  kkTog.setAttribute("aria-expanded", String(open));
+  const cur = kkElem === "off" ? "off" : (KK_ELEMS[kkElem] ? KK_ELEMS[kkElem].jp : kkElem);
+  const n = rainAlerts.length;
+  document.getElementById("kkTogLbl").textContent =
+    "メッシュ " + cur + (n ? " · ⚠" + n : "");
+  kkTog.firstChild.textContent = (open ? "▾ " : "▸ ");
+}
+kkTog.addEventListener("click", () => {
+  document.getElementById("kkfilter").classList.toggle("collapsed");
+  updateKkTog();
+});
+updateKkTog();
 
 document.getElementById("rainBtn").onclick = showRainPanel;
 /* The button carries its own count so the bulletins are discoverable without
  * opening the panel — an early-warning surface nobody knows to tap is not an
  * early-warning surface. Red only when something is actually in the window. */
 function updateRainBtn(){
+  updateKkTog();
   const b = document.getElementById("rainBtn");
   if (!b) return;
   const n = rainAlerts.length;
