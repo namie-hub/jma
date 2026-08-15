@@ -4,43 +4,6 @@
    JMA is saying it may issue a 警報 in the stated window. */
 const JMA_EARLY = {
  "areas": {
-  "050020": {
-   "kinds": [
-    {
-     "el": "rain",
-     "en": "Heavy rain",
-     "hits": [
-      {
-       "at": "2026-08-15T18:00:00+09:00",
-       "dur": "PT6H",
-       "rank": "高",
-       "when": "１５日１８時から２４時"
-      }
-     ],
-     "jp": "大雨",
-     "unknown": false
-    },
-    {
-     "el": "landslide",
-     "en": "Landslide",
-     "hits": [
-      {
-       "at": "2026-08-15T18:00:00+09:00",
-       "dur": "PT6H",
-       "rank": "中",
-       "when": "１５日１８時から２４時"
-      }
-     ],
-     "jp": "土砂災害",
-     "unknown": false
-    }
-   ],
-   "name": "内陸",
-   "office": "秋田地方気象台",
-   "report": "2026-08-15T17:00:00+09:00",
-   "text": "内陸では、１５日までの期間内に、大雨警報を発表する可能性が高い。また、１５日までの期間内に、土砂災害警報を発表する可能性がある。",
-   "worst": "高"
-  },
   "150010": {
    "kinds": [
     {
@@ -776,9 +739,9 @@ const JMA_EARLY = {
    "worst": "中"
   }
  },
- "generatedAt": "2026-08-15T10:36:12+00:00",
+ "generatedAt": "2026-08-15T11:54:31+00:00",
  "offices": 56,
  "officesFailed": 0,
  "product": "早期注意情報（明後日まで）",
- "reportDatetime": "2026-08-15T19:00:00+09:00"
+ "reportDatetime": "2026-08-15T21:00:00+09:00"
 };
