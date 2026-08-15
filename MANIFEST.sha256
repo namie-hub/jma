@@ -1,5 +1,5 @@
 # Japan Weather/Disaster Atlas — hand-authored source integrity record
-# Generated: 2026-08-08 16:25 UTC by scripts/make_manifest.sh
+# Generated: 2026-08-15 06:27 UTC by scripts/make_manifest.sh
 #
 # EXCLUDED by design (Actions-owned, rewritten by the ingest workflows):
 #   hko_tctrack.js  jma_nankai.js  jma_phenology.js  jma_typhoon_history.js
@@ -10,19 +10,20 @@
 #
 # sha256  path
 f917c2259f2a62e94f41632c5efbf23fb24abcc16aaaafbe0f82f265b3c583cf  .github/workflows/atlas-ingest.yml
-ca8ce3bcb15d16b1b1d808b2f161b239ecd4a9b71a6b6170267fe89cbfef0398  .github/workflows/feed-check.yml
-d2b63315c6e3d2a30b063901be169efc17a39f486b17c2d8ac57bbae6a9011c1  .github/workflows/update-phenology.yml
-2da67423ef142ef6d9631ada1359cf3add0d6c1b4549d5e5709fc2ab04baf767  .github/workflows/update-typhoon-history.yml
+ec05b8c26bb38ff2485d028a7c94a812dac137f6ecd9db0fa2728ba7e3fc4be2  .github/workflows/feed-check.yml
+a0c4a1639a24f59ec2a0d818aa44fd3e726536c2282561d35ea955a77f6e243b  .github/workflows/update-phenology.yml
+1c607b4f8dd6071327dda346198b5550c29bb52ae999076bce148ae18d397ed9  .github/workflows/update-typhoon-history.yml
+976fcfaf19ac52c109792ca1e15f13096c03ae1ebce93f177aff2ad68407bd83  .github/workflows/verify-manifest.yml
 b2d2b5fdfb0c2265c35556a09ec794dd85f28baf20f6cf7e35818199d410bfca  README-DEPLOY.md
-ca83629d9b85452af0fddc358d396c6fa4796bf6424951f7e967b41460e2411d  README.md
-562b26a540b1e028b0f59890c151c4c02d3ec4ea6222f056fac0d995745cec81  index.html
+f0d897cc0a5e90f88b6bca87f20bf7097c19a34209e7fcd7139f7a2d8e657708  README.md
+4a9736c9cd7b0383ba635a698f513c74013b682c34e09eb128b7234f6a909263  index.html
 27e335a679dbdc27c23649236b258cb664bc24fee87f6384710a58ac40f3bdd0  ingest_typhoon_history.py
-b974012b54e9a61748f360224b816b77d4ce67ddbeac9db7df590a754da4a33b  japan_disaster_jma.html
-ee19d8fef45e664b6baec520e8c94dc19e8f21b9b7aa929aa1f25a3b9687723b  japan_weather_jma.html
+b68acff26d5098bfbf962fdfd4894579991aca4cb07b0cf86025618d23945db0  japan_disaster_jma.html
+4a9736c9cd7b0383ba635a698f513c74013b682c34e09eb128b7234f6a909263  japan_weather_jma.html
 2d79e79f3bcb147f64ef682d5483662c88626b4ca01313af089f4e3a598c1158  jma_cities.js
 7712714e286aabda7917e85323f2f9230bec9427808e0e60b0465ddbcc19d828  jma_pressure.js
 53e924293d43a134f49bb60086608701f9f3ce495f91d1968aa394a72d0c885e  scripts/archive_typhoon_forecasts.py
-e5ea35c8589093f7888e49f01b41b372cd43ac4b09bbd3e105d4dac0984383ae  scripts/check_feeds.js
+a61ffbc0355a259df5ffaf880e1525fb08f8d4d379a4ed2f091809e11b3f1d58  scripts/check_feeds.js
 ee3dcefa7cd7426c4401509c352d6db225f1e5b6e9f345b4c8b2e8bede7e94b5  scripts/ingest_hko_tctrack.py
 205d2089aa96a0b81d5b6a3dc298ce478e8533808de8762fdd7e648be1133e66  scripts/ingest_nankai.py
 6a1888e3b67f04d9a021117ca2f92951293bceeed45313394205fe82013e8519  scripts/ingest_phenology.py
