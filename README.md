@@ -74,6 +74,61 @@ If you publish this, keep the source credits visible (the footer and legend
 already carry them) and review the terms above — especially Open-Meteo's, if you
 ever expect heavy traffic (they offer a paid tier with higher limits).
 
+## The 2026 warning reform, and the 79-day blind spot
+
+On **28 May 2026 at 13:00 JST** JMA replaced its warning system
+(「新しい防災気象情報」). Rain, landslide, river flood and storm surge moved
+onto a five-step 警戒レベル ladder with a new **level 4 「危険警報」** tier that
+sits *above* 警報; 洪水警報 and 洪水注意報 were retired and flood moved to its
+own 氾濫 code space. Wind, snow and wave keep their old names.
+
+At that moment JMA stopped updating `warning/data/warning/{office}.json` —
+**without removing it**. It still returns HTTP 200, still parses, still has the
+exact shape the Atlas expected, frozen forever at its last pre-reform bulletin.
+Every health check passed. The workflow stayed green. The heartbeat said ok.
+The Atlas rendered a 28 May dense-fog advisory as "active now" for 79 days,
+including through the 13–14 August Chiba flood, when it showed a calm yellow
+banner while Chiba was under レベル5大雨特別警報.
+
+Two lessons are now built into the code rather than written down here:
+
+1. **HTTP 200 is not health.** Every feed that carries its own timestamp
+   declares a maximum payload age, and a feed older than that is reported dead
+   *while it is still answering*. A quiet feed and a retired feed emit
+   identical bytes; only the timestamp inside distinguishes them.
+2. **A per-item age threshold cannot do this job.** Measured across all 56
+   offices: median 2.4 h, p90 20 h, genuine max 55 h — quiet prefectures go
+   days without reissuing. Any threshold tight enough to catch a dead office
+   cries wolf about a calm one. The retirement signature is that *every* office
+   freezes simultaneously, so `check_feeds.js` asserts on the **newest bulletin
+   anywhere in Japan** (observed: 5 minutes old; bound: 6 h). Verified against
+   the real retired endpoint — it fails correctly at 79 days, where the shape
+   check passed.
+
+`check_feeds.js` also keeps a deliberately non-failing **canary** on the old
+path: if it ever starts moving again, that is reported, because it would mean
+the migration needs revisiting.
+
+## Early warning, not just declaration
+
+A 警報 is a declaration made after the situation is established. The Atlas now
+also reads what arrives *first*:
+
+| Surface | Source | Why |
+| --- | --- | --- |
+| 顕著な大雨に関する気象情報 (線状降水帯) | 防災情報XML `extra.xml` | Strongest short-lead flood signal JMA emits; rides inside generic 府県気象情報 with no dedicated type code, so it is matched on published text |
+| 記録的短時間大雨情報 | same | Observed hourly total at a locally rare return period |
+| 指定河川洪水予報 | same + `flood/data/r8/` | Named-river flood forecast, separate code namespace |
+| キキクル 危険度分布 | `jmatile/data/risk/` | 1 km hazard mesh; goes red before any level moves. `maxNativeZoom: 10`, established by probing — z11+ serves transparent placeholders |
+| AMeDAS 10 min / 1 h / 3 h / 24 h rain | already-fetched `amedas/data/map/` | The 24 h total was the only window drawn. A two-hour cell barely moves it. Chiba ran ~120 mm in one hour |
+
+Municipality (class20) detail is **listed, not mapped**: JMA publishes class10
+and class15 polygon geometry but not class20. Sub-region scoping walks JMA's
+own class20 → class15 → class10 parent chain from `area.json`; when that has
+not loaded the list falls back to prefecture-wide and *says so in the panel*,
+because a prefecture-wide list under a sub-region heading is a quietly wrong
+answer.
+
 ## Known limits (by design)
 
 - Isobars are a numerical-model field, not JMA's hand-analysed chart; a 2° grid

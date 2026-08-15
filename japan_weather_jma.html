@@ -420,6 +420,16 @@
   }
 </style>
 
+<style>
+  /* rain accumulation window selector, inside the legend */
+  .rainWinBar{display:flex;gap:4px;margin-top:8px;flex-wrap:wrap}
+  .rainWinBtn{border:1px solid var(--line,#d7dee5);background:#fff;font-family:inherit;
+    font-size:.75rem;font-weight:700;padding:4px 9px;border-radius:6px;cursor:pointer;color:inherit}
+  .rainWinBtn.active{background:#3E7CB1;color:#fff;border-color:#3E7CB1}
+  .kkElemBtn{border:1px solid var(--line,#d7dee5);background:#fff;font-family:inherit;
+    font-size:.75rem;font-weight:700;padding:4px 9px;border-radius:6px;cursor:pointer;color:inherit}
+  .kkElemBtn.active{background:#A50021;color:#fff;border-color:#A50021}
+</style>
 </head>
 <body>
 
@@ -581,7 +591,23 @@ const SNOW_STOPS  = [[1,"#D8E8F0"],[50,"#7FB2C9"],[150,"#3E7CB1"],[300,"#24425F"
 const PRES_STOPS  = [[980,"#C0392B"],[995,"#D96B2B"],[1005,"#C9A227"],[1013,"#8A94A0"],[1022,"#5E9BD6"],[1032,"#24425F"]];
 
 /* discrete classes so a dot's colour maps to an explicit value range */
-const RAIN_BANDS = [
+/* Rain accumulation windows. AMeDAS publishes 10 min / 1 h / 3 h / 24 h for
+ * ~1,285 stations in the same payload the Atlas already fetches, and until
+ * now only the 24 h total was drawn.
+ *
+ * The window matters more than the colour. A 24 h total is the right lens
+ * for "has this place been soaked for days"; it is the wrong lens for "is
+ * something happening right now", because a violent two-hour cell barely
+ * moves a 24 h figure until long after the flooding starts. Chiba on 13 Aug
+ * ran at roughly 120 mm in a single hour — deep into the 1 h scale's top
+ * band while the 24 h map was still merely blue.
+ *
+ * Each window gets its own band scale, keyed to JMA's own language for that
+ * duration (猛烈な雨 is defined at ≥80 mm/h, 記録的短時間大雨情報 is issued
+ * around 100 mm/h in most prefectures), because reusing the 24 h scale for
+ * hourly rates would put a once-in-a-decade downpour in the same colour as
+ * a wet afternoon. */
+const RAIN_BANDS_24H = [
   {max:0.05, color:"#C9D4DC", label:"0"},
   {max:1,    color:"#A8C8E8", label:"<1"},
   {max:10,   color:"#5E9BD6", label:"1–10"},
@@ -589,6 +615,47 @@ const RAIN_BANDS = [
   {max:80,   color:"#7A4FB0", label:"30–80"},
   {max:1e9,  color:"#C0392B", label:"80+"}
 ];
+const RAIN_BANDS_3H = [
+  {max:0.05, color:"#C9D4DC", label:"0"},
+  {max:1,    color:"#A8C8E8", label:"<1"},
+  {max:10,   color:"#5E9BD6", label:"1–10"},
+  {max:30,   color:"#3E7CB1", label:"10–30"},
+  {max:60,   color:"#7A4FB0", label:"30–60"},
+  {max:1e9,  color:"#C0392B", label:"60+"}
+];
+const RAIN_BANDS_1H = [
+  {max:0.05, color:"#C9D4DC", label:"0"},
+  {max:1,    color:"#A8C8E8", label:"<1"},
+  {max:10,   color:"#5E9BD6", label:"1–10 やや強い"},
+  {max:20,   color:"#3E7CB1", label:"10–20 強い"},
+  {max:30,   color:"#7A4FB0", label:"20–30 激しい"},
+  {max:50,   color:"#C0392B", label:"30–50 非常に激しい"},
+  {max:80,   color:"#8E1B10", label:"50–80"},
+  {max:1e9,  color:"#4A0D07", label:"80+ 猛烈な雨"}
+];
+const RAIN_BANDS_10M = [
+  {max:0.05, color:"#C9D4DC", label:"0"},
+  {max:1,    color:"#A8C8E8", label:"<1"},
+  {max:3,    color:"#5E9BD6", label:"1–3"},
+  {max:6,    color:"#3E7CB1", label:"3–6"},
+  {max:10,   color:"#7A4FB0", label:"6–10"},
+  {max:20,   color:"#C0392B", label:"10–20"},
+  {max:1e9,  color:"#4A0D07", label:"20+"}
+];
+const RAIN_WINDOWS = {
+  "precipitation10m": {bands:RAIN_BANDS_10M, en:"last 10 min", jp:"10分間降水量", short:"10m",
+    note:"The sharpest view of a cell that is happening right now."},
+  "precipitation1h":  {bands:RAIN_BANDS_1H,  en:"last 1 h",   jp:"1時間降水量", short:"1h",
+    note:"JMA's own intensity language. 80 mm/h is 猛烈な雨; 記録的短時間大雨情報 is issued around 100 mm/h."},
+  "precipitation3h":  {bands:RAIN_BANDS_3H,  en:"last 3 h",   jp:"3時間降水量", short:"3h",
+    note:"The window flood and landslide risk actually tracks most closely."},
+  "precipitation24h": {bands:RAIN_BANDS_24H, en:"last 24 h",  jp:"24時間降水量", short:"24h",
+    note:"Cumulative soaking. Slow to move, so a developing event shows here last."}
+};
+let rainWindow = "precipitation1h";
+/* Kept as a live alias so anything still reading RAIN_BANDS follows the
+ * selected window rather than silently pinning itself to 24 h. */
+let RAIN_BANDS = RAIN_WINDOWS[rainWindow].bands;
 const SNOW_BANDS = [
   {max:50,  color:"#D8E8F0", label:"1–50"},
   {max:150, color:"#7FB2C9", label:"50–150"},
@@ -673,6 +740,12 @@ modeForecast.addTo(map);
   sb.innerHTML = '<span class="mi">🛰️</span><span class="me">Satellite</span><span class="mj">衛星赤外</span>';
   sb.addEventListener("click", toggleSatellite);
   bar.appendChild(sb);
+  const kb = document.createElement("button");
+  kb.type = "button"; kb.id = "kkBtn"; kb.className = "ovl";
+  kb.setAttribute("aria-pressed","false");
+  kb.innerHTML = '<span class="mi">\u26F0</span><span class="me">Risk mesh</span><span class="mj">\u30AD\u30AD\u30AF\u30EB</span>';
+  kb.addEventListener("click", toggleKikikuru);
+  bar.appendChild(kb);
   const tb = document.createElement("button");
   tb.type = "button"; tb.id = "tyBtn"; tb.className = "ty active";
   tb.style.display = "none";
@@ -1062,6 +1135,22 @@ function legendBands(title, bands, note){
     dx = 0; dy = 0; apply();
   });
 })();
+/* Window selector lives inside the legend, so it appears exactly when the
+ * rain view is on screen and disappears with it. Delegated because the
+ * legend's innerHTML is rebuilt on every render. */
+document.addEventListener("click", function(e){
+  const k = e.target.closest && e.target.closest(".kkElemBtn");
+  if (k){ e.stopPropagation(); kkElem = k.dataset.kke; drawKikikuru(); return; }
+  const b = e.target.closest && e.target.closest(".rainWinBtn");
+  if (!b) return;
+  e.stopPropagation();
+  if (!RAIN_WINDOWS[b.dataset.rw]) return;
+  rainWindow = b.dataset.rw;
+  RAIN_BANDS = RAIN_WINDOWS[rainWindow].bands;
+  buildObsLayers();
+  updateLegend();
+});
+
 function updateLegend(){
   if (!legendDiv) return;
   if (map.hasLayer(modeForecast)){
@@ -1076,8 +1165,14 @@ function updateLegend(){
     legendGradient("Observed temperature 気温", TEMP_STOPS, "°C",
       "All Amedas stations reporting temperature. Colour reads off the scale above; click a dot for the exact value.");
   } else if (map.hasLayer(modeRain)){
-    legendBands("Rain, last 24 h 降水量 (mm)", RAIN_BANDS,
-      "Each colour = the mm range shown. Grey = station reported 0 mm. Click a dot for exact 1 h / 24 h totals.");
+    const W = RAIN_WINDOWS[rainWindow];
+    const sel = Object.keys(RAIN_WINDOWS).map(k =>
+      '<button type="button" class="rainWinBtn' + (k === rainWindow ? " active" : "") + '" data-rw="' + k + '">'
+      + RAIN_WINDOWS[k].short + "</button>").join("");
+    legendBands("Rain, " + W.en + " " + W.jp + " (mm)", W.bands,
+      W.note + " Grey = station reported 0 mm. Tap a dot for all four windows at once. "
+      + "Scales differ per window — an hourly rate and a daily total are not comparable numbers.");
+    legendDiv.innerHTML += '<div class="rainWinBar">' + sel + "</div>";
   } else if (map.hasLayer(modeSnow)){
     const n = counts.snow;
     legendBands("Snow depth 積雪 (cm)", SNOW_BANDS,
@@ -1107,6 +1202,26 @@ function updateLegend(){
       + (modelField ? '' : (modelLoading ? 'Loading model field… ' : 'Model field unavailable — press Refresh. '))
       + 'Grey dots: <i>observed</i> Amedas values on land (tap for numbers). '
       + 'Model and observation can differ slightly — the dots are the ground truth.</span>';
+  }
+  /* Risk mesh is an overlay, not a mode: it can sit over any view, so its
+   * legend is appended to whatever the active mode rendered rather than
+   * replacing it. */
+  if (kkOn){
+    const sel = KK_ELEMS.map(e =>
+      '<button type="button" class="kkElemBtn' + (e.id === kkElem ? " active" : "") + '" data-kke="' + e.id + '">'
+      + e.jp + "</button>").join("");
+    let health;
+    if (kkError) health = '<b style="color:#a3341f">' + kkError + "</b>";
+    else if (kkErrors > 0) health = '<b style="color:#a3341f">⚠ ' + kkErrors + " tile"
+      + (kkErrors === 1 ? "" : "s") + " failed — coverage incomplete.</b>";
+    else if (kkEverLoaded) health = "Layer live — a blank area means no risk in that cell, not a gap.";
+    else health = "Loading mesh…";
+    legendDiv.innerHTML += '<hr style="border:none;border-top:1px solid var(--line,#d7dee5);margin:8px 0">'
+      + "<b>キキクル 危険度分布 " + (kkFrame ? "· " + kkStampJst() : "") + "</b>"
+      + '<div class="rainWinBar">' + sel + "</div>"
+      + '<span class="note">JMA\'s 1 km real-time hazard mesh — it turns red where rain has '
+      + "already saturated the ground, typically before any warning level moves. "
+      + "Yellow → red → purple → black follows JMA's 警戒レベル 2→5 scale. " + health + "</span>";
   }
   if (map.hasLayer(typhoonLayer) && activeTyphoons.length){
     legendDiv.innerHTML += '<span class="note" style="border-top:1px dashed var(--line);padding-top:4px;margin-top:6px">🌀 <b>'
@@ -1274,12 +1389,20 @@ function buildObsLayers(){
         .bindPopup(stPopup(sid, st, ["Temp <b>" + t.toFixed(1) + "°C</b>"]))
         .addTo(modeTemp);
     }
-    if (r24 !== null){
-      L.circleMarker(ll, {renderer:canvas, radius: r24 > 0 ? 6 : 3, weight:0.5, color:"#fff",
-        fillColor:bandColor(RAIN_BANDS,r24), fillOpacity: r24 > 0 ? 0.9 : 0.55})
+    /* Draw the selected window, but always report all four in the popup —
+     * the number that answers "is this dangerous" depends on the question,
+     * and a reader who taps a dot should not have to change mode to compare
+     * an hourly burst against a 24 h total. */
+    const rw = obsVal(o, rainWindow);
+    if (rw !== null){
+      L.circleMarker(ll, {renderer:canvas, radius: rw > 0 ? 6 : 3, weight:0.5, color:"#fff",
+        fillColor:bandColor(RAIN_WINDOWS[rainWindow].bands, rw), fillOpacity: rw > 0 ? 0.9 : 0.55})
         .bindPopup(stPopup(sid, st, [
-          "Rain 24 h <b>" + r24.toFixed(1) + " mm</b>",
-          "Rain 1 h " + (r1===null?"—":r1.toFixed(1)+" mm")]))
+          "Rain " + RAIN_WINDOWS[rainWindow].en + " <b>" + rw.toFixed(1) + " mm</b>",
+          "10 min " + (obsVal(o,"precipitation10m")===null?"—":obsVal(o,"precipitation10m").toFixed(1)+" mm")
+            + " · 1 h " + (r1===null?"—":r1.toFixed(1)+" mm"),
+          "3 h " + (obsVal(o,"precipitation3h")===null?"—":obsVal(o,"precipitation3h").toFixed(1)+" mm")
+            + " · 24 h " + (r24===null?"—":r24.toFixed(1)+" mm")]))
         .addTo(modeRain);
     }
     if (sn !== null && sn > 0){
@@ -1864,6 +1987,83 @@ function closeOverview(){document.getElementById('overviewBox').classList.remove
   document.addEventListener('keydown',e=>{if(e.key==='Escape')closeOverview();});
 })();
 
+
+/* ================= キキクル 危険度分布 (risk mesh) =================
+ * JMA's 1 km real-time hazard mesh: 土砂 (landslide), 浸水 (surface water)
+ * and 洪水 (river). Same jmatile family as the radar layer already here, and
+ * the natural companion to it — radar says where rain is falling, the mesh
+ * says where that rain has already saturated the ground. During the 13 Aug
+ * Chiba flood the mesh was red across the northwest well before totals on
+ * any accumulation map looked alarming.
+ *
+ * maxNativeZoom is 10, established by probing rather than assumed: real tile
+ * payloads exist at z10 and every request at z11 and beyond returns the
+ * 334-byte transparent tile. Without the cap Leaflet requests z12 happily
+ * and paints blank squares over live risk — the RainViewer placeholder
+ * lesson from the HK Atlas, a different host and the same trap.
+ *
+ * A blank mesh is a real answer ("no risk in that cell"), which is why tile
+ * ERRORS are counted and announced separately from tile emptiness. */
+const KK_ELEMS = [
+  {id:"land",  jp:"土砂キキクル", en:"Landslide"},
+  {id:"inund", jp:"浸水キキクル", en:"Inundation"},
+  {id:"flood", jp:"洪水キキクル", en:"River flood"}
+];
+let kkOn = false, kkElem = "land", kkLayer = null, kkFrame = null;
+let kkErrors = 0, kkEverLoaded = false, kkError = "";
+
+async function loadKikikuruFrame(){
+  try{
+    const r = await fetch(JMA + "/jmatile/data/risk/targetTimes.json", {cache:"no-store"});
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    const d = await r.json();
+    /* The analysis frame is the one whose validtime equals its basetime.
+     * Forecast members exist in the same index and are deliberately not
+     * mixed in: observed and forecast must never share a surface unlabelled. */
+    kkFrame = d.filter(t => t.validtime === t.basetime)
+               .sort((a, b) => b.basetime.localeCompare(a.basetime))[0]
+           || d.sort((a, b) => b.basetime.localeCompare(a.basetime))[0];
+    if (!kkFrame) throw new Error("no analysis frame in index");
+    kkError = "";
+  }catch(e){ kkFrame = null; kkError = "Risk mesh feed unavailable — press Refresh to retry."; }
+}
+function kkStampJst(){
+  if (!kkFrame) return "";
+  const b = kkFrame.basetime;
+  const iso = b.slice(0,4)+"-"+b.slice(4,6)+"-"+b.slice(6,8)+"T"+b.slice(8,10)+":"+b.slice(10,12)+":"+b.slice(12,14)+"Z";
+  const t = new Date(iso);
+  if (isNaN(t)) return "";
+  // basetime is UTC; this page is JST-native, so convert rather than relabel
+  const p = new Intl.DateTimeFormat("en-GB", {timeZone:"Asia/Tokyo", hour:"2-digit",
+    minute:"2-digit", hour12:false}).formatToParts(t);
+  const g = k => (p.find(x => x.type === k) || {}).value || "";
+  return g("hour") + ":" + g("minute") + " JST";
+}
+function removeKikikuru(){
+  if (kkLayer){ map.removeLayer(kkLayer); kkLayer = null; }
+}
+async function drawKikikuru(){
+  removeKikikuru();
+  if (!kkOn) return;
+  if (!kkFrame) await loadKikikuruFrame();
+  if (!kkFrame){ updateLegend(); return; }
+  kkErrors = 0; kkEverLoaded = false;
+  const url = JMA + "/jmatile/data/risk/" + kkFrame.basetime + "/" + (kkFrame.member || "immed0")
+            + "/" + kkFrame.validtime + "/surf/" + kkElem + "/{z}/{x}/{y}.png";
+  kkLayer = L.tileLayer(url, {opacity:.6, maxNativeZoom:10, maxZoom:12, noWrap:true,
+    attribution:"キキクル 危険度分布 · JMA"});
+  kkLayer.on("tileerror", () => { kkErrors++; updateLegend(); });
+  kkLayer.on("load", () => { kkEverLoaded = true; updateLegend(); });
+  kkLayer.addTo(map);
+  updateLegend();
+}
+function toggleKikikuru(){
+  kkOn = !kkOn;
+  const b = document.getElementById("kkBtn");
+  b.classList.toggle("active", kkOn);
+  b.setAttribute("aria-pressed", String(kkOn));
+  if (kkOn) drawKikikuru(); else { removeKikikuru(); updateLegend(); }
+}
 
 /* ================= radar 雨雲 & satellite 衛星 overlays =================
  * Both are official JMA tile products, same bosai family as every other feed:
