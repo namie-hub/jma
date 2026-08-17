@@ -3,48 +3,10 @@
    A FORECAST OF POSSIBILITY, not an observation and not a warning:
    JMA is saying it may issue a 警報 in the stated window. */
 const JMA_EARLY = {
- "areas": {
-  "420030": {
-   "kinds": [
-    {
-     "el": "rain",
-     "en": "Heavy rain",
-     "hits": [
-      {
-       "at": "2026-08-17T12:00:00+09:00",
-       "dur": "PT6H",
-       "rank": "中",
-       "when": "１７日１２時から１８時"
-      }
-     ],
-     "jp": "大雨",
-     "unknown": false
-    },
-    {
-     "el": "landslide",
-     "en": "Landslide",
-     "hits": [
-      {
-       "at": "2026-08-17T12:00:00+09:00",
-       "dur": "PT6H",
-       "rank": "中",
-       "when": "１７日１２時から１８時"
-      }
-     ],
-     "jp": "土砂災害",
-     "unknown": false
-    }
-   ],
-   "name": "壱岐・対馬",
-   "office": "長崎地方気象台",
-   "report": "2026-08-17T11:00:00+09:00",
-   "text": "壱岐・対馬では、１７日夕方までの期間内に、大雨、土砂災害警報を発表する可能性がある。",
-   "worst": "中"
-  }
- },
- "generatedAt": "2026-08-17T04:55:11+00:00",
+ "areas": {},
+ "generatedAt": "2026-08-17T08:23:17+00:00",
  "offices": 56,
  "officesFailed": 0,
  "product": "早期注意情報（明後日まで）",
- "reportDatetime": "2026-08-17T13:00:00+09:00"
+ "reportDatetime": "2026-08-17T17:00:00+09:00"
 };
