@@ -2633,6 +2633,12 @@ const JMA_EARLY = {
      "en": "Landslide",
      "hits": [
       {
+       "at": "2026-08-21T00:00:00+09:00",
+       "dur": "PT6H",
+       "rank": "中",
+       "when": "２１日００時から０６時"
+      },
+      {
        "at": "2026-08-21T06:00:00+09:00",
        "dur": "PT6H",
        "rank": "中",
@@ -2682,6 +2688,12 @@ const JMA_EARLY = {
      "en": "Landslide",
      "hits": [
       {
+       "at": "2026-08-21T00:00:00+09:00",
+       "dur": "PT6H",
+       "rank": "中",
+       "when": "２１日００時から０６時"
+      },
+      {
        "at": "2026-08-21T06:00:00+09:00",
        "dur": "PT6H",
        "rank": "中",
@@ -2710,6 +2722,12 @@ const JMA_EARLY = {
      "el": "rain",
      "en": "Heavy rain",
      "hits": [
+      {
+       "at": "2026-08-21T00:00:00+09:00",
+       "dur": "PT6H",
+       "rank": "中",
+       "when": "２１日００時から０６時"
+      },
       {
        "at": "2026-08-21T06:00:00+09:00",
        "dur": "PT6H",
@@ -2972,7 +2990,7 @@ const JMA_EARLY = {
    "worst": "中"
   }
  },
- "generatedAt": "2026-08-20T14:52:36+00:00",
+ "generatedAt": "2026-08-20T16:49:01+00:00",
  "offices": 56,
  "officesFailed": 0,
  "product": "早期注意情報（明後日まで）",
