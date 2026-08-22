@@ -4,80 +4,6 @@
    JMA is saying it may issue a 警報 in the stated window. */
 const JMA_EARLY = {
  "areas": {
-  "020010": {
-   "kinds": [
-    {
-     "el": "rain",
-     "en": "Heavy rain",
-     "hits": [
-      {
-       "at": "2026-08-24T12:00:00+09:00",
-       "dur": "PT12H",
-       "rank": "中",
-       "when": "２４日１２時から２４時"
-      }
-     ],
-     "jp": "大雨",
-     "unknown": false
-    },
-    {
-     "el": "landslide",
-     "en": "Landslide",
-     "hits": [
-      {
-       "at": "2026-08-24T12:00:00+09:00",
-       "dur": "PT12H",
-       "rank": "中",
-       "when": "２４日１２時から２４時"
-      }
-     ],
-     "jp": "土砂災害",
-     "unknown": false
-    }
-   ],
-   "name": "津軽",
-   "office": "青森地方気象台",
-   "report": "2026-08-22T17:00:00+09:00",
-   "text": "津軽では、２４日までの期間内に、大雨、土砂災害警報を発表する可能性がある。",
-   "worst": "中"
-  },
-  "020020": {
-   "kinds": [
-    {
-     "el": "rain",
-     "en": "Heavy rain",
-     "hits": [
-      {
-       "at": "2026-08-24T12:00:00+09:00",
-       "dur": "PT12H",
-       "rank": "中",
-       "when": "２４日１２時から２４時"
-      }
-     ],
-     "jp": "大雨",
-     "unknown": false
-    },
-    {
-     "el": "landslide",
-     "en": "Landslide",
-     "hits": [
-      {
-       "at": "2026-08-24T12:00:00+09:00",
-       "dur": "PT12H",
-       "rank": "中",
-       "when": "２４日１２時から２４時"
-      }
-     ],
-     "jp": "土砂災害",
-     "unknown": false
-    }
-   ],
-   "name": "下北",
-   "office": "青森地方気象台",
-   "report": "2026-08-22T17:00:00+09:00",
-   "text": "下北では、２４日までの期間内に、大雨、土砂災害警報を発表する可能性がある。",
-   "worst": "中"
-  },
   "050010": {
    "kinds": [
     {
@@ -1567,8 +1493,8 @@ const JMA_EARLY = {
    "worst": "中"
   }
  },
- "generatedAt": "2026-08-22T14:36:04+00:00",
- "offices": 56,
+ "generatedAt": "2026-08-22T17:33:39+00:00",
+ "offices": 55,
  "officesFailed": 0,
  "product": "早期注意情報（明後日まで）",
  "reportDatetime": "2026-08-22T23:00:00+09:00"
