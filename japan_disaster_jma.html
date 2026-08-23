@@ -658,13 +658,35 @@ let tsunamiList = [];
 const historyCache = {};   // "years|mag" -> geojson features
 
 /* ================= helpers ================= */
+/* The Ibaraki lesson (2026-08-23). Every VXSE5k/VXSE52 cod is decimal
+ * degrees: "+36.0+140.1-70000/". The VXSE61 震源要素更新 notice — issued ONLY
+ * for notable quakes, roughly M5.5+ — writes the same field in degrees +
+ * decimal minutes: "+3559.9+14005.7-68000/". Read naively that is lat 3559°,
+ * so the marker for an M5.9 震度5弱 quake was plotted off the planet, with no
+ * exception, two hours after the event. parseCod now refuses impossible
+ * coordinates (never render a lie), and codFromDDMM converts the VXSE61 form
+ * explicitly where loadQuakes applies it. */
 function parseCod(cod){
-  // "+37.3+139.1-50000/" → {lat, lon, depthKm}
+  // "+37.3+139.1-50000/" → {lat, lon, depthKm}; null if absent or out of range
   const m = /^([+-][\d.]+)([+-][\d.]+)(?:([+-]\d+))?/.exec(cod || "");
   if (!m) return null;
-  return {lat:parseFloat(m[1]), lon:parseFloat(m[2]),
-          depth: m[3] ? Math.abs(parseInt(m[3],10))/1000 : null};
+  const lat = parseFloat(m[1]), lon = parseFloat(m[2]);
+  if (!(Math.abs(lat) <= 90 && Math.abs(lon) <= 180)){
+    console.warn("parseCod: coordinate out of range, refusing to plot", cod);
+    return null;
+  }
+  return {lat, lon, depth: m[3] ? Math.abs(parseInt(m[3],10))/1000 : null};
 }
+// "+3559.9+14005.7-68000/" (DDMM.M) → "+35.998+140.095-68000/" (decimal degrees)
+function codFromDDMM(cod){
+  const m = /^([+-])(\d+)(\d\d\.\d+)([+-])(\d+)(\d\d\.\d+)(.*)$/.exec(cod || "");
+  if (!m) return null;
+  const lat = (parseInt(m[2],10) + parseFloat(m[3])/60) * (m[1]==="-"?-1:1);
+  const lon = (parseInt(m[5],10) + parseFloat(m[6])/60) * (m[4]==="-"?-1:1);
+  if (!(Math.abs(lat) <= 90 && Math.abs(lon) <= 180)) return null;
+  return (lat>=0?"+":"") + lat.toFixed(3) + (lon>=0?"+":"") + lon.toFixed(3) + m[7];
+}
+const isHypoUpdate = q => /震源要素更新/.test(q.ttl||"") || /VXSE61/.test(q.json||"");
 function jstFmt(iso){
   if (!iso) return "—";
   return iso.replace("T"," ").replace(/\+09:00$/," JST");
@@ -727,15 +749,38 @@ document.querySelector("#panel .phead").addEventListener("click", e => {
 });
 
 /* ================= quakes 地震 ================= */
-async function loadQuakes(){
-  const list = await (await fetch(JMA + "/quake/data/list.json")).json();
-  const byEid = {}, anyEid = {};
+/* One located record per eid. Located reports (VXSE5k 震源・震度情報 /
+ * VXSE52 震源に関する情報) compete on ctt as before. A VXSE61 震源要素更新 is
+ * never the base record: it carries no maxi and DDMM.M coordinates, so it is
+ * applied as an overlay — refined cod / mag / depth on top of the located
+ * report, original intensity kept, and the revision time remembered so the
+ * popup can say so. Pure function so the jsdom test can drive it directly. */
+function selectQuakes(list){
+  const byEid = {}, updates = {};
   for (const q of list){
-    if (!anyEid[q.eid] || q.ctt > anyEid[q.eid].ctt) anyEid[q.eid] = q;
     if (!q.cod) continue;
+    if (isHypoUpdate(q)){
+      if (!updates[q.eid] || q.ctt > updates[q.eid].ctt) updates[q.eid] = q;
+      continue;
+    }
     if (!byEid[q.eid] || q.ctt > byEid[q.eid].ctt) byEid[q.eid] = q;
   }
-  quakes = Object.values(byEid).sort((a,b) => b.at.localeCompare(a.at));
+  for (const eid in updates){
+    const u = updates[eid], base = byEid[eid];
+    if (!base) continue;                       // update without a located report: ignore
+    const cod = codFromDDMM(u.cod) || (parseCod(u.cod) ? u.cod : null);
+    if (!cod){ console.warn("VXSE61 cod unparseable, keeping located report", u.cod); continue; }
+    byEid[eid] = Object.assign({}, base, {cod, mag: u.mag || base.mag,
+      hypoUpdatedAt: u.rdt || u.at, hypoUpdateCtt: u.ctt, hypoUpdateJson: u.json});
+  }
+  return Object.values(byEid).sort((a,b) => b.at.localeCompare(a.at));
+}
+async function loadQuakes(){
+  const list = await (await fetch(JMA + "/quake/data/list.json")).json();
+  quakes = selectQuakes(list);
+  const anyEid = {}, byEid = {};
+  for (const q of list) if (!anyEid[q.eid] || q.ctt > anyEid[q.eid].ctt) anyEid[q.eid] = q;
+  for (const q of quakes) byEid[q.eid] = q;
   // 震度速報-only events: intensity has been observed but JMA has not yet
   // published an epicenter. These are the first minutes of a significant quake —
   // surface them instead of silently dropping cod-less entries. Kept for 2 h;
@@ -812,6 +857,7 @@ async function showQuake(q){
     + "<dt>Max intensity</dt><dd>"+(s
         ? '<span class="intBadge" style="background:'+s.c+';color:'+s.t+'">'+s.k+"</span> 震度"+s.k
         : "—")+"</dd>"
+    + (q.hypoUpdatedAt ? "<dt>Hypocenter</dt><dd>revised by JMA 震源要素更新 "+jstFmt(q.hypoUpdatedAt)+"</dd>" : "")
     + "</dl><div id=\"qStations\" class=\"note\">Loading per-station intensity…</div>"
     + (p ? shelterLink(p.lat, p.lon) : "");
   openPanel("M"+esc(q.mag)+" — "+esc(q.en_anm||q.anm)+'<br><small style="opacity:.8">'+esc(q.anm)+"</small>", html);
