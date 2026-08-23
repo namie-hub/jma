@@ -187,9 +187,33 @@ async function probe(name, url, validate){
      the guard instead is that the newest entry must not be absurdly old
      relative to the list itself changing, which only the ingest side can
      see. Shape is checked; freshness explicitly is not. */
+  /* Bulletin-type classifier (the Ibaraki lesson, 2026-08-23). The list is
+     not one message type. VXSE61 震源要素更新 writes cod in DDMM.M and the Atlas
+     once plotted an M5.9 at latitude 3559. Every entry must now be a type the
+     Atlas knows how to read, and every decimal-degree cod must be in range.
+     A new VXSE code or a shape change fails loudly here, not on the map. */
+  // observed 2026-08-23: VXSE51 震度速報, VXSE52 震源に関する情報, VXSE5k 震源・震度情報,
+  // VXSE5e 遠地地震, VXSE61 震源要素更新, VYSE52 南海トラフ解説. VXSE53/56/60/62 are
+  // documented siblings (遠地震源, 地震回数, 長周期地震動) not yet seen in the list.
+  const KNOWN_VXSE = /_V[XY]SE(51|52|53|56|5e|5k|60|61|62)_/;
   checks.push(probe("quake list",
     "https://www.jma.go.jp/bosai/quake/data/list.json",
-    async r => { const d = await r.json(); return (Array.isArray(d) && d.length && d[0].eid) ? null : "unexpected JSON shape"; }));
+    async r => {
+      const d = await r.json();
+      if (!(Array.isArray(d) && d.length && d[0].eid)) return "unexpected JSON shape";
+      const unknown = [...new Set(d.filter(q => !KNOWN_VXSE.test(q.json||"")).map(q => (q.json||"").split("_")[2] || q.ttl))];
+      if (unknown.length) return "unclassified bulletin type(s): " + unknown.join(", ");
+      for (const q of d){
+        if (!q.cod) continue;
+        const m = /^([+-][\d.]+)([+-][\d.]+)/.exec(q.cod); if (!m) return "cod unparseable: " + q.cod;
+        const isDDMM = /VXSE61/.test(q.json||"");
+        const lat = parseFloat(m[1]), lon = parseFloat(m[2]);
+        const ok = isDDMM ? (lat <= 9000 && lon <= 18000) : (Math.abs(lat) <= 90 && Math.abs(lon) <= 180);
+        if (!ok) return "cod out of range for its bulletin type: " + q.cod + " (" + (q.json||"").split("_")[2] + ")";
+        if (!isDDMM && Math.abs(lat) > 90) return "decimal-degree bulletin carrying DDMM.M cod: " + q.json;
+      }
+      return null;
+    }));
 
   /* Warnings: EVERY office, not a Tokyo sample. The retirement that broke
      this Atlas was nationwide and simultaneous, but a partial restructure is
