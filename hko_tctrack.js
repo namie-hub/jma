@@ -5,7 +5,7 @@
  * The page shows bulletinTime and generatedAt separately: staleness is
  * always visible, never hidden. */
 const HK_TCTRACK = {
-  "generatedAt": "2026-08-24T05:23:32+00:00",
+  "generatedAt": "2026-08-24T06:23:03+00:00",
   "source": "HKO tc_list.xml + hko_tctrack_{TCID}.xml on www.weather.gov.hk (no CORS headers; ingested every 30 min by GitHub Actions)",
   "storms": [
     {
@@ -941,7 +941,7 @@ const HK_TCTRACK = {
       "id": "2631",
       "nameEn": "GAENARI",
       "nameZh": "簡拉維",
-      "bulletinTime": "2026-08-24T12:30:40+08:00",
+      "bulletinTime": "2026-08-24T14:16:53+08:00",
       "analysis": {
         "lat": 24.7,
         "lon": 119.1,
@@ -1082,63 +1082,63 @@ const HK_TCTRACK = {
       "forecast": [
         {
           "i": 1,
-          "lat": 24.7,
-          "lon": 119.1
+          "lat": 24.75,
+          "lon": 119.06
         },
         {
           "i": 2,
-          "lat": 24.7,
-          "lon": 119.11
+          "lat": 24.81,
+          "lon": 118.99
         },
         {
           "i": 3,
-          "lat": 24.7,
-          "lon": 119.11
-        },
-        {
-          "i": 4,
-          "lat": 24.7,
-          "lon": 119.11
-        },
-        {
-          "i": 5,
-          "lat": 24.7,
-          "lon": 119.11
-        },
-        {
-          "i": 6,
-          "lat": 24.7,
-          "lon": 119.1
-        },
-        {
-          "i": 7,
-          "lat": 24.7,
-          "lon": 119.08
-        },
-        {
-          "i": 8,
-          "lat": 24.7,
-          "lon": 119.04
-        },
-        {
-          "i": 9,
-          "lat": 24.7,
-          "lon": 119.0
-        },
-        {
-          "i": 10,
-          "lat": 24.7,
-          "lon": 118.96
-        },
-        {
-          "i": 11,
-          "lat": 24.7,
+          "lat": 24.89,
           "lon": 118.92
         },
         {
+          "i": 4,
+          "lat": 24.97,
+          "lon": 118.84
+        },
+        {
+          "i": 5,
+          "lat": 25.05,
+          "lon": 118.77
+        },
+        {
+          "i": 6,
+          "lat": 25.1,
+          "lon": 118.7
+        },
+        {
+          "i": 7,
+          "lat": 25.14,
+          "lon": 118.64
+        },
+        {
+          "i": 8,
+          "lat": 25.16,
+          "lon": 118.58
+        },
+        {
+          "i": 9,
+          "lat": 25.18,
+          "lon": 118.53
+        },
+        {
+          "i": 10,
+          "lat": 25.19,
+          "lon": 118.47
+        },
+        {
+          "i": 11,
+          "lat": 25.19,
+          "lon": 118.43
+        },
+        {
           "i": 12,
-          "lat": 24.7,
-          "lon": 118.9,
+          "lat": 25.2,
+          "lon": 118.4,
           "time": "2026-08-24T15:00:00+00:00",
           "intensity": "Low Pressure Area",
           "wind": "40km/h"
