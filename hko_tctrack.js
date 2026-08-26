@@ -5,20 +5,20 @@
  * The page shows bulletinTime and generatedAt separately: staleness is
  * always visible, never hidden. */
 const HK_TCTRACK = {
-  "generatedAt": "2026-08-25T23:35:35+00:00",
+  "generatedAt": "2026-08-26T01:56:33+00:00",
   "source": "HKO tc_list.xml + hko_tctrack_{TCID}.xml on www.weather.gov.hk (no CORS headers; ingested every 30 min by GitHub Actions)",
   "storms": [
     {
       "id": "2629",
       "nameEn": "NARRA",
       "nameZh": "紫檀",
-      "bulletinTime": "2026-08-26T06:30:37+08:00",
+      "bulletinTime": "2026-08-26T09:34:26+08:00",
       "analysis": {
-        "lat": 20.4,
-        "lon": 110.3,
-        "time": "2026-08-25T21:00:00+00:00",
+        "lat": 21.0,
+        "lon": 110.6,
+        "time": "2026-08-26T00:00:00+00:00",
         "intensity": "Tropical Depression",
-        "wind": "55km/h"
+        "wind": "45km/h"
       },
       "past": [
         {
@@ -364,169 +364,81 @@ const HK_TCTRACK = {
           "time": "2026-08-25T18:00:00+00:00",
           "intensity": "Tropical Depression",
           "wind": "55km/h"
+        },
+        {
+          "i": 44,
+          "lat": 20.4,
+          "lon": 110.3,
+          "time": "2026-08-25T21:00:00+00:00",
+          "intensity": "Tropical Depression",
+          "wind": "55km/h"
         }
       ],
       "forecast": [
         {
           "i": 1,
-          "lat": 20.5,
-          "lon": 110.35
+          "lat": 21.1,
+          "lon": 110.62
         },
         {
           "i": 2,
-          "lat": 20.64,
-          "lon": 110.41
-        },
-        {
-          "i": 3,
-          "lat": 20.8,
-          "lon": 110.49
-        },
-        {
-          "i": 4,
-          "lat": 20.97,
-          "lon": 110.57
-        },
-        {
-          "i": 5,
-          "lat": 21.15,
+          "lat": 21.25,
           "lon": 110.65
         },
         {
-          "i": 6,
-          "lat": 21.3,
-          "lon": 110.7
+          "i": 3,
+          "lat": 21.43,
+          "lon": 110.69
         },
         {
-          "i": 7,
-          "lat": 21.45,
-          "lon": 110.74
-        },
-        {
-          "i": 8,
+          "i": 4,
           "lat": 21.6,
+          "lon": 110.73
+        },
+        {
+          "i": 5,
+          "lat": 21.77,
           "lon": 110.76
         },
         {
+          "i": 6,
+          "lat": 21.9,
+          "lon": 110.8
+        },
+        {
+          "i": 7,
+          "lat": 22.0,
+          "lon": 110.84
+        },
+        {
+          "i": 8,
+          "lat": 22.09,
+          "lon": 110.87
+        },
+        {
           "i": 9,
-          "lat": 21.76,
-          "lon": 110.78
+          "lat": 22.16,
+          "lon": 110.91
         },
         {
           "i": 10,
-          "lat": 21.9,
-          "lon": 110.79
+          "lat": 22.21,
+          "lon": 110.95
         },
         {
           "i": 11,
-          "lat": 22.01,
-          "lon": 110.79
+          "lat": 22.26,
+          "lon": 110.98
         },
         {
           "i": 12,
-          "lat": 22.1,
-          "lon": 110.8,
-          "time": "2026-08-26T09:00:00+00:00",
+          "lat": 22.3,
+          "lon": 111.0,
+          "time": "2026-08-26T12:00:00+00:00",
           "intensity": "Low Pressure Area",
           "wind": "40km/h"
         }
       ]
-    },
-    {
-      "id": "2632",
-      "nameEn": "ATSANI",
-      "nameZh": "艾莎尼",
-      "bulletinTime": "2026-08-25T10:00:41+08:00",
-      "analysis": {
-        "lat": 19.2,
-        "lon": 138.0,
-        "time": "2026-08-25T00:00:00+00:00",
-        "intensity": "Low Pressure Area",
-        "wind": "40km/h"
-      },
-      "past": [
-        {
-          "i": 1,
-          "lat": 12.1,
-          "lon": 135.1,
-          "time": "2026-08-22T12:00:00+00:00",
-          "intensity": "Tropical Depression",
-          "wind": "45km/h"
-        },
-        {
-          "i": 2,
-          "lat": 12.4,
-          "lon": 135.0,
-          "time": "2026-08-22T18:00:00+00:00",
-          "intensity": "Tropical Depression",
-          "wind": "55km/h"
-        },
-        {
-          "i": 3,
-          "lat": 13.0,
-          "lon": 135.2,
-          "time": "2026-08-23T00:00:00+00:00",
-          "intensity": "Tropical Depression",
-          "wind": "55km/h"
-        },
-        {
-          "i": 4,
-          "lat": 13.4,
-          "lon": 135.9,
-          "time": "2026-08-23T06:00:00+00:00",
-          "intensity": "Tropical Depression",
-          "wind": "55km/h"
-        },
-        {
-          "i": 5,
-          "lat": 13.7,
-          "lon": 136.2,
-          "time": "2026-08-23T12:00:00+00:00",
-          "intensity": "Tropical Depression",
-          "wind": "55km/h"
-        },
-        {
-          "i": 6,
-          "lat": 14.0,
-          "lon": 136.5,
-          "time": "2026-08-23T18:00:00+00:00",
-          "intensity": "Tropical Depression",
-          "wind": "55km/h"
-        },
-        {
-          "i": 7,
-          "lat": 15.0,
-          "lon": 137.0,
-          "time": "2026-08-24T00:00:00+00:00",
-          "intensity": "Tropical Depression",
-          "wind": "55km/h"
-        },
-        {
-          "i": 8,
-          "lat": 16.1,
-          "lon": 138.0,
-          "time": "2026-08-24T06:00:00+00:00",
-          "intensity": "Tropical Depression",
-          "wind": "55km/h"
-        },
-        {
-          "i": 9,
-          "lat": 16.6,
-          "lon": 138.1,
-          "time": "2026-08-24T12:00:00+00:00",
-          "intensity": "Tropical Depression",
-          "wind": "55km/h"
-        },
-        {
-          "i": 10,
-          "lat": 18.0,
-          "lon": 138.0,
-          "time": "2026-08-24T18:00:00+00:00",
-          "intensity": "Tropical Depression",
-          "wind": "55km/h"
-        }
-      ],
-      "forecast": []
     },
     {
       "id": "2630",
