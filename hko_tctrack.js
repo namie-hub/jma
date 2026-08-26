@@ -5,20 +5,20 @@
  * The page shows bulletinTime and generatedAt separately: staleness is
  * always visible, never hidden. */
 const HK_TCTRACK = {
-  "generatedAt": "2026-08-26T05:15:47+00:00",
+  "generatedAt": "2026-08-26T07:56:47+00:00",
   "source": "HKO tc_list.xml + hko_tctrack_{TCID}.xml on www.weather.gov.hk (no CORS headers; ingested every 30 min by GitHub Actions)",
   "storms": [
     {
       "id": "2629",
       "nameEn": "NARRA",
       "nameZh": "紫檀",
-      "bulletinTime": "2026-08-26T12:30:36+08:00",
+      "bulletinTime": "2026-08-26T15:30:35+08:00",
       "analysis": {
-        "lat": 21.4,
-        "lon": 110.7,
-        "time": "2026-08-26T03:00:00+00:00",
-        "intensity": "Tropical Depression",
-        "wind": "45km/h"
+        "lat": 21.8,
+        "lon": 111.1,
+        "time": "2026-08-26T06:00:00+00:00",
+        "intensity": "Low Pressure Area",
+        "wind": "40km/h"
       },
       "past": [
         {
@@ -380,43 +380,17 @@ const HK_TCTRACK = {
           "time": "2026-08-26T00:00:00+00:00",
           "intensity": "Tropical Depression",
           "wind": "45km/h"
+        },
+        {
+          "i": 46,
+          "lat": 21.4,
+          "lon": 110.7,
+          "time": "2026-08-26T03:00:00+00:00",
+          "intensity": "Tropical Depression",
+          "wind": "45km/h"
         }
       ],
-      "forecast": [
-        {
-          "i": 1,
-          "lat": 21.51,
-          "lon": 110.72
-        },
-        {
-          "i": 2,
-          "lat": 21.67,
-          "lon": 110.76
-        },
-        {
-          "i": 3,
-          "lat": 21.85,
-          "lon": 110.8
-        },
-        {
-          "i": 4,
-          "lat": 22.03,
-          "lon": 110.84
-        },
-        {
-          "i": 5,
-          "lat": 22.19,
-          "lon": 110.88
-        },
-        {
-          "i": 6,
-          "lat": 22.3,
-          "lon": 110.9,
-          "time": "2026-08-26T09:00:00+00:00",
-          "intensity": "Low Pressure Area",
-          "wind": "40km/h"
-        }
-      ]
+      "forecast": []
     },
     {
       "id": "2630",
