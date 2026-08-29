@@ -5,20 +5,20 @@
  * The page shows bulletinTime and generatedAt separately: staleness is
  * always visible, never hidden. */
 const HK_TCTRACK = {
-  "generatedAt": "2026-08-28T22:37:28+00:00",
+  "generatedAt": "2026-08-29T03:52:10+00:00",
   "source": "HKO tc_list.xml + hko_tctrack_{TCID}.xml on www.weather.gov.hk (no CORS headers; ingested every 30 min by GitHub Actions)",
   "storms": [
     {
       "id": "2630",
       "nameEn": "SAUDEL",
       "nameZh": "沙德爾",
-      "bulletinTime": "2026-08-29T04:00:36+08:00",
+      "bulletinTime": "2026-08-29T10:00:36+08:00",
       "analysis": {
-        "lat": 27.2,
-        "lon": 117.1,
-        "time": "2026-08-28T18:00:00+00:00",
+        "lat": 27.0,
+        "lon": 115.7,
+        "time": "2026-08-29T00:00:00+00:00",
         "intensity": "Tropical Depression",
-        "wind": "55km/h"
+        "wind": "45km/h"
       },
       "past": [
         {
@@ -276,129 +276,137 @@ const HK_TCTRACK = {
           "time": "2026-08-28T12:00:00+00:00",
           "intensity": "Tropical Storm",
           "wind": "65km/h"
+        },
+        {
+          "i": 33,
+          "lat": 27.2,
+          "lon": 117.1,
+          "time": "2026-08-28T18:00:00+00:00",
+          "intensity": "Tropical Depression",
+          "wind": "55km/h"
         }
       ],
       "forecast": [
         {
           "i": 1,
-          "lat": 27.19,
-          "lon": 116.97
+          "lat": 26.99,
+          "lon": 115.59
         },
         {
           "i": 2,
-          "lat": 27.17,
-          "lon": 116.79
+          "lat": 26.97,
+          "lon": 115.45
         },
         {
           "i": 3,
-          "lat": 27.16,
-          "lon": 116.57
+          "lat": 26.96,
+          "lon": 115.28
         },
         {
           "i": 4,
-          "lat": 27.14,
-          "lon": 116.34
+          "lat": 26.94,
+          "lon": 115.09
         },
         {
           "i": 5,
-          "lat": 27.12,
-          "lon": 116.11
+          "lat": 26.92,
+          "lon": 114.88
         },
         {
           "i": 6,
-          "lat": 27.1,
-          "lon": 115.9
+          "lat": 26.89,
+          "lon": 114.66
         },
         {
           "i": 7,
-          "lat": 27.09,
-          "lon": 115.71
+          "lat": 26.87,
+          "lon": 114.44
         },
         {
           "i": 8,
-          "lat": 27.07,
-          "lon": 115.54
+          "lat": 26.84,
+          "lon": 114.23
         },
         {
           "i": 9,
-          "lat": 27.06,
-          "lon": 115.36
+          "lat": 26.81,
+          "lon": 114.02
         },
         {
           "i": 10,
-          "lat": 27.05,
-          "lon": 115.19
+          "lat": 26.78,
+          "lon": 113.82
         },
         {
           "i": 11,
-          "lat": 27.03,
-          "lon": 115.0
+          "lat": 26.74,
+          "lon": 113.65
         },
         {
           "i": 12,
-          "lat": 27.0,
-          "lon": 114.8
+          "lat": 26.7,
+          "lon": 113.5
         },
         {
           "i": 13,
-          "lat": 26.97,
-          "lon": 114.58
+          "lat": 26.61,
+          "lon": 113.27
         },
         {
           "i": 14,
-          "lat": 26.93,
-          "lon": 114.34
+          "lat": 26.51,
+          "lon": 113.08
         },
         {
           "i": 15,
-          "lat": 26.89,
-          "lon": 114.09
+          "lat": 26.41,
+          "lon": 112.93
         },
         {
           "i": 16,
-          "lat": 26.84,
-          "lon": 113.84
+          "lat": 26.29,
+          "lon": 112.8
         },
         {
           "i": 17,
-          "lat": 26.78,
-          "lon": 113.61
+          "lat": 26.15,
+          "lon": 112.66
         },
         {
           "i": 18,
-          "lat": 26.7,
-          "lon": 113.4
+          "lat": 26.0,
+          "lon": 112.5
         },
         {
           "i": 19,
-          "lat": 26.6,
-          "lon": 113.21
+          "lat": 25.82,
+          "lon": 112.31
         },
         {
           "i": 20,
-          "lat": 26.47,
-          "lon": 113.03
+          "lat": 25.59,
+          "lon": 112.1
         },
         {
           "i": 21,
-          "lat": 26.33,
-          "lon": 112.86
+          "lat": 25.36,
+          "lon": 111.89
         },
         {
           "i": 22,
-          "lat": 26.2,
-          "lon": 112.71
+          "lat": 25.13,
+          "lon": 111.69
         },
         {
           "i": 23,
-          "lat": 26.08,
-          "lon": 112.59
+          "lat": 24.94,
+          "lon": 111.52
         },
         {
           "i": 24,
-          "lat": 26.0,
-          "lon": 112.5,
-          "time": "2026-08-29T18:00:00+00:00",
+          "lat": 24.8,
+          "lon": 111.4,
+          "time": "2026-08-30T00:00:00+00:00",
           "intensity": "Low Pressure Area",
           "wind": "40km/h"
         }
