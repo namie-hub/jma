@@ -8,10 +8,10 @@ const JMA_NANKAI = {
  "latchedSince": null,
  "lastKaisetsu": {
   "title": "南海トラフ地震関連解説情報",
-  "reportTime": "2026-08-07T17:00:00+09:00",
-  "headline": "第１０８回南海トラフ沿いの地震に関する評価検討会で、南海トラフ周辺の地殻活動を評価しました。",
-  "url": "https://www.data.jma.go.jp/developer/xml/data/20260807080028_0_VYSE52_010000.xml"
+  "reportTime": "2026-09-07T17:00:00+09:00",
+  "headline": "第１０９回南海トラフ沿いの地震に関する評価検討会で、南海トラフ周辺の地殻活動を評価しました。",
+  "url": "https://www.data.jma.go.jp/developer/xml/data/20260907080008_0_VYSE52_010000.xml"
  },
- "generated": "2026-08-07T19:09:30+09:00",
+ "generated": "2026-09-07T21:24:51+09:00",
  "source": "JMA 防災情報XML developer feed (eqvol_l.xml) — latched by GitHub Actions; status persists past the 7-day feed window until an ending telegram is seen"
 };
