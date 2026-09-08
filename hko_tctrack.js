@@ -5,18 +5,18 @@
  * The page shows bulletinTime and generatedAt separately: staleness is
  * always visible, never hidden. */
 const HK_TCTRACK = {
-  "generatedAt": "2026-09-08T09:04:56+00:00",
+  "generatedAt": "2026-09-08T17:29:48+00:00",
   "source": "HKO tc_list.xml + hko_tctrack_{TCID}.xml on www.weather.gov.hk (no CORS headers; ingested every 30 min by GitHub Actions)",
   "storms": [
     {
       "id": "2635",
       "nameEn": "KROVANH",
       "nameZh": "科羅旺",
-      "bulletinTime": "2026-09-08T16:00:41+08:00",
+      "bulletinTime": "2026-09-08T22:00:41+08:00",
       "analysis": {
-        "lat": 31.2,
-        "lon": 132.8,
-        "time": "2026-09-08T06:00:00+00:00",
+        "lat": 31.9,
+        "lon": 133.0,
+        "time": "2026-09-08T12:00:00+00:00",
         "intensity": "Tropical Depression",
         "wind": "55km/h"
       },
@@ -252,96 +252,74 @@ const HK_TCTRACK = {
           "time": "2026-09-08T00:00:00+00:00",
           "intensity": "Tropical Depression",
           "wind": "55km/h"
+        },
+        {
+          "i": 30,
+          "lat": 31.2,
+          "lon": 132.8,
+          "time": "2026-09-08T06:00:00+00:00",
+          "intensity": "Tropical Depression",
+          "wind": "55km/h"
         }
       ],
       "forecast": [
         {
           "i": 1,
-          "lat": 31.28,
-          "lon": 132.84
+          "lat": 32.02,
+          "lon": 133.09
         },
         {
           "i": 2,
-          "lat": 31.4,
-          "lon": 132.89
+          "lat": 32.19,
+          "lon": 133.22
         },
         {
           "i": 3,
-          "lat": 31.54,
-          "lon": 132.96
+          "lat": 32.39,
+          "lon": 133.37
         },
         {
           "i": 4,
-          "lat": 31.69,
-          "lon": 133.03
+          "lat": 32.6,
+          "lon": 133.54
         },
         {
           "i": 5,
-          "lat": 31.85,
-          "lon": 133.11
+          "lat": 32.81,
+          "lon": 133.72
         },
         {
           "i": 6,
-          "lat": 32.0,
-          "lon": 133.2
-        },
-        {
-          "i": 7,
-          "lat": 32.16,
-          "lon": 133.29
-        },
-        {
-          "i": 8,
-          "lat": 32.32,
-          "lon": 133.39
-        },
-        {
-          "i": 9,
-          "lat": 32.49,
-          "lon": 133.49
-        },
-        {
-          "i": 10,
-          "lat": 32.66,
-          "lon": 133.61
-        },
-        {
-          "i": 11,
-          "lat": 32.83,
-          "lon": 133.75
-        },
-        {
-          "i": 12,
           "lat": 33.0,
           "lon": 133.9
         },
         {
-          "i": 13,
+          "i": 7,
           "lat": 33.18,
-          "lon": 134.1
+          "lon": 134.11
         },
         {
-          "i": 14,
-          "lat": 33.37,
-          "lon": 134.34
+          "i": 8,
+          "lat": 33.38,
+          "lon": 134.35
         },
         {
-          "i": 15,
-          "lat": 33.56,
-          "lon": 134.59
+          "i": 9,
+          "lat": 33.57,
+          "lon": 134.61
         },
         {
-          "i": 16,
+          "i": 10,
           "lat": 33.74,
-          "lon": 134.84
+          "lon": 134.85
         },
         {
-          "i": 17,
+          "i": 11,
           "lat": 33.89,
           "lon": 135.05
         },
         {
-          "i": 18,
+          "i": 12,
           "lat": 34.0,
           "lon": 135.2,
           "time": "2026-09-09T00:00:00+00:00",
