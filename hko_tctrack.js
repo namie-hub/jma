@@ -5,18 +5,18 @@
  * The page shows bulletinTime and generatedAt separately: staleness is
  * always visible, never hidden. */
 const HK_TCTRACK = {
-  "generatedAt": "2026-09-08T17:29:48+00:00",
+  "generatedAt": "2026-09-08T20:16:12+00:00",
   "source": "HKO tc_list.xml + hko_tctrack_{TCID}.xml on www.weather.gov.hk (no CORS headers; ingested every 30 min by GitHub Actions)",
   "storms": [
     {
       "id": "2635",
       "nameEn": "KROVANH",
       "nameZh": "科羅旺",
-      "bulletinTime": "2026-09-08T22:00:41+08:00",
+      "bulletinTime": "2026-09-09T04:00:41+08:00",
       "analysis": {
-        "lat": 31.9,
-        "lon": 133.0,
-        "time": "2026-09-08T12:00:00+00:00",
+        "lat": 33.0,
+        "lon": 133.6,
+        "time": "2026-09-08T18:00:00+00:00",
         "intensity": "Tropical Depression",
         "wind": "55km/h"
       },
@@ -260,68 +260,46 @@ const HK_TCTRACK = {
           "time": "2026-09-08T06:00:00+00:00",
           "intensity": "Tropical Depression",
           "wind": "55km/h"
+        },
+        {
+          "i": 31,
+          "lat": 31.9,
+          "lon": 133.0,
+          "time": "2026-09-08T12:00:00+00:00",
+          "intensity": "Tropical Depression",
+          "wind": "55km/h"
         }
       ],
       "forecast": [
         {
           "i": 1,
-          "lat": 32.02,
-          "lon": 133.09
-        },
-        {
-          "i": 2,
-          "lat": 32.19,
-          "lon": 133.22
-        },
-        {
-          "i": 3,
-          "lat": 32.39,
-          "lon": 133.37
-        },
-        {
-          "i": 4,
-          "lat": 32.6,
-          "lon": 133.54
-        },
-        {
-          "i": 5,
-          "lat": 32.81,
+          "lat": 33.08,
           "lon": 133.72
         },
         {
-          "i": 6,
-          "lat": 33.0,
+          "i": 2,
+          "lat": 33.21,
           "lon": 133.9
         },
         {
-          "i": 7,
-          "lat": 33.18,
-          "lon": 134.11
+          "i": 3,
+          "lat": 33.35,
+          "lon": 134.1
         },
         {
-          "i": 8,
-          "lat": 33.38,
-          "lon": 134.35
+          "i": 4,
+          "lat": 33.49,
+          "lon": 134.3
         },
         {
-          "i": 9,
-          "lat": 33.57,
-          "lon": 134.61
+          "i": 5,
+          "lat": 33.62,
+          "lon": 134.48
         },
         {
-          "i": 10,
-          "lat": 33.74,
-          "lon": 134.85
-        },
-        {
-          "i": 11,
-          "lat": 33.89,
-          "lon": 135.05
-        },
-        {
-          "i": 12,
-          "lat": 34.0,
-          "lon": 135.2,
+          "i": 6,
+          "lat": 33.7,
+          "lon": 134.6,
           "time": "2026-09-09T00:00:00+00:00",
           "intensity": "Extratropical Low",
           "wind": "--"
