@@ -5,20 +5,20 @@
  * The page shows bulletinTime and generatedAt separately: staleness is
  * always visible, never hidden. */
 const HK_TCTRACK = {
-  "generatedAt": "2026-09-08T20:16:12+00:00",
+  "generatedAt": "2026-09-09T06:40:34+00:00",
   "source": "HKO tc_list.xml + hko_tctrack_{TCID}.xml on www.weather.gov.hk (no CORS headers; ingested every 30 min by GitHub Actions)",
   "storms": [
     {
       "id": "2635",
       "nameEn": "KROVANH",
       "nameZh": "科羅旺",
-      "bulletinTime": "2026-09-09T04:00:41+08:00",
+      "bulletinTime": "2026-09-09T10:04:34+08:00",
       "analysis": {
-        "lat": 33.0,
-        "lon": 133.6,
-        "time": "2026-09-08T18:00:00+00:00",
-        "intensity": "Tropical Depression",
-        "wind": "55km/h"
+        "lat": 33.4,
+        "lon": 134.3,
+        "time": "2026-09-09T00:00:00+00:00",
+        "intensity": "Extratropical Low",
+        "wind": "--"
       },
       "past": [
         {
@@ -268,43 +268,17 @@ const HK_TCTRACK = {
           "time": "2026-09-08T12:00:00+00:00",
           "intensity": "Tropical Depression",
           "wind": "55km/h"
+        },
+        {
+          "i": 32,
+          "lat": 33.0,
+          "lon": 133.6,
+          "time": "2026-09-08T18:00:00+00:00",
+          "intensity": "Tropical Depression",
+          "wind": "55km/h"
         }
       ],
-      "forecast": [
-        {
-          "i": 1,
-          "lat": 33.08,
-          "lon": 133.72
-        },
-        {
-          "i": 2,
-          "lat": 33.21,
-          "lon": 133.9
-        },
-        {
-          "i": 3,
-          "lat": 33.35,
-          "lon": 134.1
-        },
-        {
-          "i": 4,
-          "lat": 33.49,
-          "lon": 134.3
-        },
-        {
-          "i": 5,
-          "lat": 33.62,
-          "lon": 134.48
-        },
-        {
-          "i": 6,
-          "lat": 33.7,
-          "lon": 134.6,
-          "time": "2026-09-09T00:00:00+00:00",
-          "intensity": "Extratropical Low",
-          "wind": "--"
-        }
-      ]
+      "forecast": []
     }
   ]
 };
