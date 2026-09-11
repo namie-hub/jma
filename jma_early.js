@@ -3,10 +3,115 @@
    A FORECAST OF POSSIBILITY, not an observation and not a warning:
    JMA is saying it may issue a 警報 in the stated window. */
 const JMA_EARLY = {
- "areas": {},
- "generatedAt": "2026-09-11T17:54:15+00:00",
- "offices": 1,
+ "areas": {
+  "130020": {
+   "kinds": [
+    {
+     "el": "landslide",
+     "en": "Landslide",
+     "hits": [
+      {
+       "at": "2026-09-12T06:00:00+09:00",
+       "dur": "PT6H",
+       "rank": "中",
+       "when": "１２日０６時から１２時"
+      }
+     ],
+     "jp": "土砂災害",
+     "unknown": false
+    }
+   ],
+   "name": "伊豆諸島北部",
+   "office": "気象庁",
+   "report": "2026-09-12T05:00:00+09:00",
+   "text": "伊豆諸島北部では、１２日昼前までの期間内に、土砂災害警報を発表する可能性がある。",
+   "worst": "中"
+  },
+  "130030": {
+   "kinds": [
+    {
+     "el": "landslide",
+     "en": "Landslide",
+     "hits": [
+      {
+       "at": "2026-09-12T06:00:00+09:00",
+       "dur": "PT6H",
+       "rank": "中",
+       "when": "１２日０６時から１２時"
+      }
+     ],
+     "jp": "土砂災害",
+     "unknown": false
+    }
+   ],
+   "name": "伊豆諸島南部",
+   "office": "気象庁",
+   "report": "2026-09-12T05:00:00+09:00",
+   "text": "伊豆諸島南部では、１２日昼前までの期間内に、土砂災害警報を発表する可能性がある。",
+   "worst": "中"
+  },
+  "150040": {
+   "kinds": [
+    {
+     "el": "landslide",
+     "en": "Landslide",
+     "hits": [
+      {
+       "at": "2026-09-14T00:00:00+09:00",
+       "dur": "PT12H",
+       "rank": "中",
+       "when": "１４日００時から１２時"
+      },
+      {
+       "at": "2026-09-14T12:00:00+09:00",
+       "dur": "PT12H",
+       "rank": "中",
+       "when": "１４日１２時から２４時"
+      }
+     ],
+     "jp": "土砂災害",
+     "unknown": false
+    }
+   ],
+   "name": "佐渡",
+   "office": "新潟地方気象台",
+   "report": "2026-09-12T05:00:00+09:00",
+   "text": "佐渡では、１４日までの期間内に、土砂災害警報を発表する可能性がある。",
+   "worst": "中"
+  },
+  "170020": {
+   "kinds": [
+    {
+     "el": "landslide",
+     "en": "Landslide",
+     "hits": [
+      {
+       "at": "2026-09-14T00:00:00+09:00",
+       "dur": "PT12H",
+       "rank": "中",
+       "when": "１４日００時から１２時"
+      },
+      {
+       "at": "2026-09-14T12:00:00+09:00",
+       "dur": "PT12H",
+       "rank": "中",
+       "when": "１４日１２時から２４時"
+      }
+     ],
+     "jp": "土砂災害",
+     "unknown": false
+    }
+   ],
+   "name": "能登",
+   "office": "金沢地方気象台",
+   "report": "2026-09-12T05:00:00+09:00",
+   "text": "能登では、１４日までの期間内に、土砂災害警報を発表する可能性がある。",
+   "worst": "中"
+  }
+ },
+ "generatedAt": "2026-09-11T20:55:45+00:00",
+ "offices": 56,
  "officesFailed": 0,
  "product": "早期注意情報（明後日まで）",
- "reportDatetime": "2026-09-11T18:00:00+09:00"
+ "reportDatetime": "2026-09-12T05:00:00+09:00"
 };
