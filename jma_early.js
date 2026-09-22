@@ -3,39 +3,9 @@
    A FORECAST OF POSSIBILITY, not an observation and not a warning:
    JMA is saying it may issue a 警報 in the stated window. */
 const JMA_EARLY = {
- "areas": {
-  "120030": {
-   "kinds": [
-    {
-     "el": "landslide",
-     "en": "Landslide",
-     "hits": [
-      {
-       "at": "2026-09-22T18:00:00+09:00",
-       "dur": "PT6H",
-       "rank": "中",
-       "when": "２２日１８時から２４時"
-      },
-      {
-       "at": "2026-09-23T00:00:00+09:00",
-       "dur": "PT6H",
-       "rank": "中",
-       "when": "２３日００時から０６時"
-      }
-     ],
-     "jp": "土砂災害",
-     "unknown": false
-    }
-   ],
-   "name": "南部",
-   "office": "銚子地方気象台",
-   "report": "2026-09-22T17:00:00+09:00",
-   "text": "南部では、２３日明け方までの期間内に、土砂災害警報を発表する可能性がある。",
-   "worst": "中"
-  }
- },
- "generatedAt": "2026-09-22T14:50:05+00:00",
- "offices": 56,
+ "areas": {},
+ "generatedAt": "2026-09-22T18:50:52+00:00",
+ "offices": 3,
  "officesFailed": 0,
  "product": "早期注意情報（明後日まで）",
  "reportDatetime": "2026-09-22T20:00:00+09:00"
