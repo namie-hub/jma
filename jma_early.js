@@ -3,10 +3,69 @@
    A FORECAST OF POSSIBILITY, not an observation and not a warning:
    JMA is saying it may issue a 警報 in the stated window. */
 const JMA_EARLY = {
- "areas": {},
- "generatedAt": "2026-09-22T18:50:52+00:00",
- "offices": 3,
+ "areas": {
+  "130020": {
+   "kinds": [
+    {
+     "el": "landslide",
+     "en": "Landslide",
+     "hits": [
+      {
+       "at": "2026-09-23T06:00:00+09:00",
+       "dur": "PT6H",
+       "rank": "中",
+       "when": "２３日０６時から１２時"
+      },
+      {
+       "at": "2026-09-23T12:00:00+09:00",
+       "dur": "PT6H",
+       "rank": "中",
+       "when": "２３日１２時から１８時"
+      }
+     ],
+     "jp": "土砂災害",
+     "unknown": false
+    }
+   ],
+   "name": "伊豆諸島北部",
+   "office": "気象庁",
+   "report": "2026-09-23T05:00:00+09:00",
+   "text": "伊豆諸島北部では、２３日夕方までの期間内に、土砂災害警報を発表する可能性がある。",
+   "worst": "中"
+  },
+  "130030": {
+   "kinds": [
+    {
+     "el": "landslide",
+     "en": "Landslide",
+     "hits": [
+      {
+       "at": "2026-09-23T06:00:00+09:00",
+       "dur": "PT6H",
+       "rank": "中",
+       "when": "２３日０６時から１２時"
+      },
+      {
+       "at": "2026-09-23T12:00:00+09:00",
+       "dur": "PT6H",
+       "rank": "中",
+       "when": "２３日１２時から１８時"
+      }
+     ],
+     "jp": "土砂災害",
+     "unknown": false
+    }
+   ],
+   "name": "伊豆諸島南部",
+   "office": "気象庁",
+   "report": "2026-09-23T05:00:00+09:00",
+   "text": "伊豆諸島南部では、２３日夕方までの期間内に、土砂災害警報を発表する可能性がある。",
+   "worst": "中"
+  }
+ },
+ "generatedAt": "2026-09-22T22:05:02+00:00",
+ "offices": 56,
  "officesFailed": 0,
  "product": "早期注意情報（明後日まで）",
- "reportDatetime": "2026-09-22T20:00:00+09:00"
+ "reportDatetime": "2026-09-23T05:00:00+09:00"
 };
