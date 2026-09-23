@@ -3,92 +3,10 @@
    A FORECAST OF POSSIBILITY, not an observation and not a warning:
    JMA is saying it may issue a 警報 in the stated window. */
 const JMA_EARLY = {
- "areas": {
-  "120030": {
-   "kinds": [
-    {
-     "el": "landslide",
-     "en": "Landslide",
-     "hits": [
-      {
-       "at": "2026-09-23T18:00:00+09:00",
-       "dur": "PT6H",
-       "rank": "中",
-       "when": "２３日１８時から２４時"
-      }
-     ],
-     "jp": "土砂災害",
-     "unknown": false
-    }
-   ],
-   "name": "南部",
-   "office": "銚子地方気象台",
-   "report": "2026-09-23T17:00:00+09:00",
-   "text": "南部では、２３日までの期間内に、土砂災害警報を発表する可能性がある。",
-   "worst": "中"
-  },
-  "130020": {
-   "kinds": [
-    {
-     "el": "landslide",
-     "en": "Landslide",
-     "hits": [
-      {
-       "at": "2026-09-23T18:00:00+09:00",
-       "dur": "PT6H",
-       "rank": "中",
-       "when": "２３日１８時から２４時"
-      },
-      {
-       "at": "2026-09-24T00:00:00+09:00",
-       "dur": "PT6H",
-       "rank": "中",
-       "when": "２４日００時から０６時"
-      }
-     ],
-     "jp": "土砂災害",
-     "unknown": false
-    }
-   ],
-   "name": "伊豆諸島北部",
-   "office": "気象庁",
-   "report": "2026-09-23T17:00:00+09:00",
-   "text": "伊豆諸島北部では、２４日明け方までの期間内に、土砂災害警報を発表する可能性がある。",
-   "worst": "中"
-  },
-  "130030": {
-   "kinds": [
-    {
-     "el": "landslide",
-     "en": "Landslide",
-     "hits": [
-      {
-       "at": "2026-09-23T18:00:00+09:00",
-       "dur": "PT6H",
-       "rank": "中",
-       "when": "２３日１８時から２４時"
-      },
-      {
-       "at": "2026-09-24T00:00:00+09:00",
-       "dur": "PT6H",
-       "rank": "中",
-       "when": "２４日００時から０６時"
-      }
-     ],
-     "jp": "土砂災害",
-     "unknown": false
-    }
-   ],
-   "name": "伊豆諸島南部",
-   "office": "気象庁",
-   "report": "2026-09-23T17:00:00+09:00",
-   "text": "伊豆諸島南部では、２４日明け方までの期間内に、土砂災害警報を発表する可能性がある。",
-   "worst": "中"
-  }
- },
- "generatedAt": "2026-09-23T09:58:40+00:00",
+ "areas": {},
+ "generatedAt": "2026-09-23T22:15:34+00:00",
  "offices": 56,
  "officesFailed": 0,
  "product": "早期注意情報（明後日まで）",
- "reportDatetime": "2026-09-23T17:00:00+09:00"
+ "reportDatetime": "2026-09-24T05:00:00+09:00"
 };
