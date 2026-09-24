@@ -3,10 +3,207 @@
    A FORECAST OF POSSIBILITY, not an observation and not a warning:
    JMA is saying it may issue a 警報 in the stated window. */
 const JMA_EARLY = {
- "areas": {},
- "generatedAt": "2026-09-24T07:42:44+00:00",
+ "areas": {
+  "471010": {
+   "kinds": [
+    {
+     "el": "wind",
+     "en": "Wind / snowstorm",
+     "hits": [
+      {
+       "at": "2026-09-27T12:00:00+09:00",
+       "dur": "PT12H",
+       "rank": "中",
+       "when": "２７日１２時から２４時"
+      }
+     ],
+     "jp": "風（風雪）",
+     "unknown": false
+    },
+    {
+     "el": "wave",
+     "en": "High waves",
+     "hits": [
+      {
+       "at": "2026-09-27T12:00:00+09:00",
+       "dur": "PT12H",
+       "rank": "中",
+       "when": "２７日１２時から２４時"
+      }
+     ],
+     "jp": "波",
+     "unknown": false
+    },
+    {
+     "el": "tide",
+     "en": "Storm surge",
+     "hits": [
+      {
+       "at": "2026-09-27T12:00:00+09:00",
+       "dur": "PT12H",
+       "rank": "中",
+       "when": "２７日１２時から２４時"
+      }
+     ],
+     "jp": "潮位",
+     "unknown": false
+    }
+   ],
+   "name": "本島中南部",
+   "office": "沖縄気象台",
+   "report": "2026-09-25T05:00:00+09:00",
+   "text": "本島中南部では、２７日までの期間内に、暴風、波浪、高潮警報を発表する可能性がある。",
+   "worst": "中"
+  },
+  "471020": {
+   "kinds": [
+    {
+     "el": "wind",
+     "en": "Wind / snowstorm",
+     "hits": [
+      {
+       "at": "2026-09-27T12:00:00+09:00",
+       "dur": "PT12H",
+       "rank": "中",
+       "when": "２７日１２時から２４時"
+      }
+     ],
+     "jp": "風（風雪）",
+     "unknown": false
+    },
+    {
+     "el": "wave",
+     "en": "High waves",
+     "hits": [
+      {
+       "at": "2026-09-27T12:00:00+09:00",
+       "dur": "PT12H",
+       "rank": "中",
+       "when": "２７日１２時から２４時"
+      }
+     ],
+     "jp": "波",
+     "unknown": false
+    },
+    {
+     "el": "tide",
+     "en": "Storm surge",
+     "hits": [
+      {
+       "at": "2026-09-27T12:00:00+09:00",
+       "dur": "PT12H",
+       "rank": "中",
+       "when": "２７日１２時から２４時"
+      }
+     ],
+     "jp": "潮位",
+     "unknown": false
+    }
+   ],
+   "name": "本島北部",
+   "office": "沖縄気象台",
+   "report": "2026-09-25T05:00:00+09:00",
+   "text": "本島北部では、２７日までの期間内に、暴風、波浪、高潮警報を発表する可能性がある。",
+   "worst": "中"
+  },
+  "471030": {
+   "kinds": [
+    {
+     "el": "wind",
+     "en": "Wind / snowstorm",
+     "hits": [
+      {
+       "at": "2026-09-27T12:00:00+09:00",
+       "dur": "PT12H",
+       "rank": "中",
+       "when": "２７日１２時から２４時"
+      }
+     ],
+     "jp": "風（風雪）",
+     "unknown": false
+    },
+    {
+     "el": "wave",
+     "en": "High waves",
+     "hits": [
+      {
+       "at": "2026-09-27T12:00:00+09:00",
+       "dur": "PT12H",
+       "rank": "中",
+       "when": "２７日１２時から２４時"
+      }
+     ],
+     "jp": "波",
+     "unknown": false
+    }
+   ],
+   "name": "久米島",
+   "office": "沖縄気象台",
+   "report": "2026-09-25T05:00:00+09:00",
+   "text": "久米島では、２７日までの期間内に、暴風、波浪警報を発表する可能性がある。",
+   "worst": "中"
+  },
+  "473000": {
+   "kinds": [
+    {
+     "el": "wind",
+     "en": "Wind / snowstorm",
+     "hits": [
+      {
+       "at": "2026-09-27T12:00:00+09:00",
+       "dur": "PT12H",
+       "rank": "中",
+       "when": "２７日１２時から２４時"
+      }
+     ],
+     "jp": "風（風雪）",
+     "unknown": false
+    },
+    {
+     "el": "wave",
+     "en": "High waves",
+     "hits": [
+      {
+       "at": "2026-09-27T12:00:00+09:00",
+       "dur": "PT12H",
+       "rank": "中",
+       "when": "２７日１２時から２４時"
+      }
+     ],
+     "jp": "波",
+     "unknown": false
+    },
+    {
+     "el": "tide",
+     "en": "Storm surge",
+     "hits": [
+      {
+       "at": "2026-09-27T00:00:00+09:00",
+       "dur": "PT12H",
+       "rank": "中",
+       "when": "２７日００時から１２時"
+      },
+      {
+       "at": "2026-09-27T12:00:00+09:00",
+       "dur": "PT12H",
+       "rank": "中",
+       "when": "２７日１２時から２４時"
+      }
+     ],
+     "jp": "潮位",
+     "unknown": false
+    }
+   ],
+   "name": "宮古島地方",
+   "office": "宮古島地方気象台",
+   "report": "2026-09-25T05:00:00+09:00",
+   "text": "宮古島地方では、２７日までの期間内に、暴風、波浪、高潮警報を発表する可能性がある。",
+   "worst": "中"
+  }
+ },
+ "generatedAt": "2026-09-24T20:28:04+00:00",
  "offices": 56,
  "officesFailed": 0,
  "product": "早期注意情報（明後日まで）",
- "reportDatetime": "2026-09-24T17:00:00+09:00"
+ "reportDatetime": "2026-09-25T05:00:00+09:00"
 };
