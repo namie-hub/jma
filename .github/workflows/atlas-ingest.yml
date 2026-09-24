@@ -38,6 +38,15 @@
 # email. "No green run in 3 h" is true sustained failure regardless of how
 # quiet the feeds are. (Candidate backport to the HK workflow later.)
 #
+# Escalation hardening (24 Sep 2026, after run #694): the Actions API lookup
+# itself can blip. Under the runner's `bash -eo pipefail`, a failed
+# `curl -sf` inside `last_green=$(...)` killed the step silently with exit 1,
+# turning "couldn't check history" into a false "sustained failure" email.
+# Now: 3 retries with timeout; if the API is still unreachable the step
+# emits a warning annotation and exits 0 (next run re-checks). Failed legs
+# are always surfaced as a public annotation, so the run Summary names the
+# leg without needing to sign in to view logs.
+#
 # NOTE the permissions block: contents:write alone would strip the token's
 # default actions:read, silently breaking the escalation query.
 #
@@ -131,23 +140,34 @@ jobs:
       - name: Escalate only sustained ingest failures
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          FAILS: ${{ steps.run.outputs.fails }}
         run: |
-          fails="${{ steps.run.outputs.fails }}"
-          [ -z "$fails" ] && { echo "all ingests OK"; exit 0; }
-          echo "failed leg(s):$fails — checking for a green run in the last 3 h"
-          last_green=$(curl -sf \
-            -H "Authorization: Bearer $GH_TOKEN" \
-            -H "Accept: application/vnd.github+json" \
-            "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/workflows/atlas-ingest.yml/runs?status=success&per_page=1" \
-            | python3 -c "import json,sys; r=json.load(sys.stdin).get('workflow_runs') or []; print(r[0]['run_started_at'] if r else '')")
+          [ -z "$FAILS" ] && { echo "all ingests OK"; exit 0; }
+          # Public annotation: names the failed leg without needing to sign in to logs.
+          echo "::warning title=Ingest leg failed::$FAILS"
+          url="https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/workflows/atlas-ingest.yml/runs?status=success&per_page=1"
+          body=""
+          for i in 1 2 3; do
+            body=$(curl -sf --max-time 20 \
+              -H "Authorization: Bearer $GH_TOKEN" \
+              -H "Accept: application/vnd.github+json" "$url") && break
+            body=""
+            echo "Actions API lookup failed (attempt $i)"
+            sleep 10
+          done
+          if [ -z "$body" ]; then
+            echo "::warning title=Escalation check skipped::Actions API unreachable after 3 tries; cannot tell transient from sustained. Next run re-checks."
+            exit 0
+          fi
+          last_green=$(printf '%s' "$body" | python3 -c "import json,sys; r=json.load(sys.stdin).get('workflow_runs') or []; print(r[0]['run_started_at'] if r else '')") || last_green=""
           if [ -n "$last_green" ]; then
             age=$(( $(date +%s) - $(date -d "$last_green" +%s) ))
             if [ "$age" -le 10800 ]; then
               echo "transient: green run ${age}s ago — no alert, next run will retry"
               exit 0
             fi
-            echo "SUSTAINED FAILURE: no green run for ${age}s (>3h). This alert is real." >&2
+            echo "::error title=Sustained ingest failure::no green run for ${age}s (>3h) — failing leg(s): $FAILS"
           else
-            echo "SUSTAINED FAILURE: no successful run of this workflow found at all." >&2
+            echo "::error title=Sustained ingest failure::no successful run found — failing leg(s): $FAILS"
           fi
           exit 1
