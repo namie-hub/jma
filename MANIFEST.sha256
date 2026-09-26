@@ -1,5 +1,5 @@
 # Japan Weather/Disaster Atlas — hand-authored source integrity record
-# Generated: 2026-09-24 07:41 UTC by scripts/make_manifest.sh
+# Generated: 2026-09-26 02:16 UTC by scripts/make_manifest.sh
 #
 # EXCLUDED by design (Actions-owned, rewritten by the ingest workflows):
 #   hko_tctrack.js  jma_early.js  jma_nankai.js  jma_phenology.js
@@ -10,7 +10,7 @@
 # Verify: sha256sum -c MANIFEST.sha256   (macOS: shasum -a 256 -c)
 #
 # sha256  path
-dc829ba74d4c583384a3a70a622c0b888f77fe86b1d66b4a571cb129bed1c8e2  .github/workflows/atlas-ingest.yml
+5ef3a5d096a4a13b4a7b8757c59a9cb18720e89bfa360f71195383a1ee4d0a02  .github/workflows/atlas-ingest.yml
 ec05b8c26bb38ff2485d028a7c94a812dac137f6ecd9db0fa2728ba7e3fc4be2  .github/workflows/feed-check.yml
 b3ecd1d322a450a940d6f1025a5ebd23e8eb0e4c7cbb1e1e4d62255303b63863  .github/workflows/update-phenology.yml
 96279758fb2f0fc74ca3f001ffb211baf02ff0d7e53238f158547a4d34075ee6  .github/workflows/update-typhoon-history.yml
