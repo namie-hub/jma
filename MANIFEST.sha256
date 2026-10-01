@@ -1,5 +1,5 @@
 # Japan Weather/Disaster Atlas — hand-authored source integrity record
-# Generated: 2026-09-26 02:16 UTC by scripts/make_manifest.sh
+# Generated: 2026-10-01 13:41 UTC by scripts/make_manifest.sh
 #
 # EXCLUDED by design (Actions-owned, rewritten by the ingest workflows):
 #   hko_tctrack.js  jma_early.js  jma_nankai.js  jma_phenology.js
@@ -29,13 +29,14 @@ f83917783866b593101dc580e010ae19c2f51ce95ef5fc1fa38a63379b15dc44  japan_weather_
 6cbe1f8b014b039a74d511fffd89c65d30d0676d7ece170338b31cb53963652f  scripts/ingest_early_warning.py
 ee3dcefa7cd7426c4401509c352d6db225f1e5b6e9f345b4c8b2e8bede7e94b5  scripts/ingest_hko_tctrack.py
 205d2089aa96a0b81d5b6a3dc298ce478e8533808de8762fdd7e648be1133e66  scripts/ingest_nankai.py
-6a1888e3b67f04d9a021117ca2f92951293bceeed45313394205fe82013e8519  scripts/ingest_phenology.py
+6f8781997ff2cf5b1ef5601d4476385e17a9178807522924a9ca9f75d31a9cf1  scripts/ingest_phenology.py
 27e335a679dbdc27c23649236b258cb664bc24fee87f6384710a58ac40f3bdd0  scripts/ingest_typhoon_history.py
 3eb09836ff5f7b3594f8c1682cffdf5299de12ae39fe212f21fc826479d071f0  scripts/make_manifest.sh
 bdd55ceef6022adc1c631cb43937469c6d7d8d723eb82f8e1090d006db8a6c65  tests/test_archive_typhoon_forecasts.py
 8d24838d2d6f912ddb0c2f80673b9e4ef42f2d1275be45b41113554b620c1df2  tests/test_ingest_early_warning.py
 19d67dca4b7088770e64ca663a8456b643cabd979af573a1d4c05dbc4a5f46ef  tests/test_ingest_hko_tctrack.py
 a7f9f32ddc6f47c18950796bd721d6876ac0c6aa11f0c3b955bbb7013ecb71c5  tests/test_ingest_nankai.py
+bba9ed65bc0fb11b23dd90a9483c64d9a35b5f6a8cbe4087583e709926bff15e  tests/test_ingest_phenology.py
 bdf7b3e544312dc44359b1a2cee946636fa5fddcebca0e755f6ceaa274e0bded  tests/test_quake_hypo_update.js
 066daca850d8ffbef007af00b06eac0015728dee279c51f3cb6c716df7c42edf  vendor/images/layers-2x.png
 1dbbe9d028e292f36fcba8f8b3a28d5e8932754fc2215b9ac69e4cdecf5107c6  vendor/images/layers.png
