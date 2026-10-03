@@ -3,65 +3,9 @@
    A FORECAST OF POSSIBILITY, not an observation and not a warning:
    JMA is saying it may issue a 警報 in the stated window. */
 const JMA_EARLY = {
- "areas": {
-  "130040": {
-   "kinds": [
-    {
-     "el": "wind",
-     "en": "Wind / snowstorm",
-     "hits": [
-      {
-       "at": "2026-10-05T12:00:00+09:00",
-       "dur": "PT12H",
-       "rank": "中",
-       "when": "５日１２時から２４時"
-      }
-     ],
-     "jp": "風（風雪）",
-     "unknown": false
-    },
-    {
-     "el": "wave",
-     "en": "High waves",
-     "hits": [
-      {
-       "at": "2026-10-04T12:00:00+09:00",
-       "dur": "PT6H",
-       "rank": "中",
-       "when": "４日１２時から１８時"
-      },
-      {
-       "at": "2026-10-04T18:00:00+09:00",
-       "dur": "PT6H",
-       "rank": "高",
-       "when": "４日１８時から２４時"
-      },
-      {
-       "at": "2026-10-05T00:00:00+09:00",
-       "dur": "PT12H",
-       "rank": "高",
-       "when": "５日００時から１２時"
-      },
-      {
-       "at": "2026-10-05T12:00:00+09:00",
-       "dur": "PT12H",
-       "rank": "高",
-       "when": "５日１２時から２４時"
-      }
-     ],
-     "jp": "波",
-     "unknown": false
-    }
-   ],
-   "name": "小笠原諸島",
-   "office": "気象庁",
-   "report": "2026-10-03T17:00:00+09:00",
-   "text": "小笠原諸島では、５日までの期間内に、波浪警報を発表する可能性が高い。また、５日までの期間内に、暴風警報を発表する可能性がある。",
-   "worst": "高"
-  }
- },
- "generatedAt": "2026-10-03T14:54:02+00:00",
- "offices": 56,
+ "areas": {},
+ "generatedAt": "2026-10-03T18:39:57+00:00",
+ "offices": 2,
  "officesFailed": 0,
  "product": "早期注意情報（明後日まで）",
  "reportDatetime": "2026-10-03T22:00:00+09:00"
