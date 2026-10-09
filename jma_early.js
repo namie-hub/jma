@@ -3,10 +3,40 @@
    A FORECAST OF POSSIBILITY, not an observation and not a warning:
    JMA is saying it may issue a 警報 in the stated window. */
 const JMA_EARLY = {
- "areas": {},
- "generatedAt": "2026-10-08T23:57:00+00:00",
+ "areas": {
+  "460030": {
+   "kinds": [
+    {
+     "el": "rain",
+     "en": "Heavy rain",
+     "hits": [
+      {
+       "at": "2026-10-09T18:00:00+09:00",
+       "dur": "PT6H",
+       "rank": "中",
+       "when": "９日１８時から２４時"
+      },
+      {
+       "at": "2026-10-10T00:00:00+09:00",
+       "dur": "PT6H",
+       "rank": "中",
+       "when": "１０日００時から０６時"
+      }
+     ],
+     "jp": "大雨",
+     "unknown": false
+    }
+   ],
+   "name": "種子島・屋久島地方",
+   "office": "鹿児島地方気象台",
+   "report": "2026-10-09T11:00:00+09:00",
+   "text": "種子島・屋久島地方では、１０日明け方までの期間内に、大雨警報を発表する可能性がある。",
+   "worst": "中"
+  }
+ },
+ "generatedAt": "2026-10-09T06:03:05+00:00",
  "offices": 56,
  "officesFailed": 0,
  "product": "早期注意情報（明後日まで）",
- "reportDatetime": "2026-10-09T08:00:00+09:00"
+ "reportDatetime": "2026-10-09T11:00:00+09:00"
 };
