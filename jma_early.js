@@ -3,34 +3,10 @@
    A FORECAST OF POSSIBILITY, not an observation and not a warning:
    JMA is saying it may issue a 警報 in the stated window. */
 const JMA_EARLY = {
- "areas": {
-  "011000": {
-   "kinds": [
-    {
-     "el": "wind",
-     "en": "Wind / snowstorm",
-     "hits": [
-      {
-       "at": "2026-10-15T12:00:00+09:00",
-       "dur": "PT6H",
-       "rank": "中",
-       "when": "１５日１２時から１８時"
-      }
-     ],
-     "jp": "風（風雪）",
-     "unknown": false
-    }
-   ],
-   "name": "宗谷地方",
-   "office": "稚内地方気象台",
-   "report": "2026-10-15T11:00:00+09:00",
-   "text": "宗谷地方では、１５日夕方までの期間内に、暴風（暴風雪）警報を発表する可能性がある。",
-   "worst": "中"
-  }
- },
- "generatedAt": "2026-10-15T01:49:32+00:00",
+ "areas": {},
+ "generatedAt": "2026-10-15T12:51:18+00:00",
  "offices": 56,
  "officesFailed": 0,
  "product": "早期注意情報（明後日まで）",
- "reportDatetime": "2026-10-15T11:00:00+09:00"
+ "reportDatetime": "2026-10-15T17:00:00+09:00"
 };
