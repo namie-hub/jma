@@ -3,10 +3,80 @@
    A FORECAST OF POSSIBILITY, not an observation and not a warning:
    JMA is saying it may issue a 警報 in the stated window. */
 const JMA_EARLY = {
- "areas": {},
- "generatedAt": "2026-10-16T18:20:24+00:00",
- "offices": 1,
+ "areas": {
+  "012010": {
+   "kinds": [
+    {
+     "el": "wind",
+     "en": "Wind / snowstorm",
+     "hits": [
+      {
+       "at": "2026-10-19T00:00:00+09:00",
+       "dur": "PT12H",
+       "rank": "中",
+       "when": "１９日００時から１２時"
+      }
+     ],
+     "jp": "風（風雪）",
+     "unknown": false
+    }
+   ],
+   "name": "上川地方",
+   "office": "旭川地方気象台",
+   "report": "2026-10-17T05:00:00+09:00",
+   "text": "上川地方では、１９日昼前までの期間内に、暴風（暴風雪）警報を発表する可能性がある。",
+   "worst": "中"
+  },
+  "012020": {
+   "kinds": [
+    {
+     "el": "wind",
+     "en": "Wind / snowstorm",
+     "hits": [
+      {
+       "at": "2026-10-19T00:00:00+09:00",
+       "dur": "PT12H",
+       "rank": "中",
+       "when": "１９日００時から１２時"
+      }
+     ],
+     "jp": "風（風雪）",
+     "unknown": false
+    }
+   ],
+   "name": "留萌地方",
+   "office": "旭川地方気象台",
+   "report": "2026-10-17T05:00:00+09:00",
+   "text": "留萌地方では、１９日昼前までの期間内に、暴風（暴風雪）警報を発表する可能性がある。",
+   "worst": "中"
+  },
+  "017020": {
+   "kinds": [
+    {
+     "el": "wind",
+     "en": "Wind / snowstorm",
+     "hits": [
+      {
+       "at": "2026-10-19T00:00:00+09:00",
+       "dur": "PT12H",
+       "rank": "中",
+       "when": "１９日００時から１２時"
+      }
+     ],
+     "jp": "風（風雪）",
+     "unknown": false
+    }
+   ],
+   "name": "檜山地方",
+   "office": "函館地方気象台",
+   "report": "2026-10-17T05:00:00+09:00",
+   "text": "檜山地方では、１９日昼前までの期間内に、暴風（暴風雪）警報を発表する可能性がある。",
+   "worst": "中"
+  }
+ },
+ "generatedAt": "2026-10-16T21:42:10+00:00",
+ "offices": 56,
  "officesFailed": 0,
  "product": "早期注意情報（明後日まで）",
- "reportDatetime": "2026-10-16T18:00:00+09:00"
+ "reportDatetime": "2026-10-17T06:00:00+09:00"
 };
