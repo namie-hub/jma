@@ -220,9 +220,9 @@ const JMA_EARLY = {
    "worst": "中"
   }
  },
- "generatedAt": "2026-10-17T21:25:35+00:00",
+ "generatedAt": "2026-10-17T23:24:11+00:00",
  "offices": 56,
  "officesFailed": 0,
  "product": "早期注意情報（明後日まで）",
- "reportDatetime": "2026-10-18T05:00:00+09:00"
+ "reportDatetime": "2026-10-18T08:00:00+09:00"
 };
