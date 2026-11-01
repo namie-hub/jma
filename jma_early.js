@@ -3,69 +3,9 @@
    A FORECAST OF POSSIBILITY, not an observation and not a warning:
    JMA is saying it may issue a 警報 in the stated window. */
 const JMA_EARLY = {
- "areas": {
-  "130040": {
-   "kinds": [
-    {
-     "el": "wave",
-     "en": "High waves",
-     "hits": [
-      {
-       "at": "2026-11-01T18:00:00+09:00",
-       "dur": "PT6H",
-       "rank": "中",
-       "when": "１日１８時から２４時"
-      },
-      {
-       "at": "2026-11-02T00:00:00+09:00",
-       "dur": "PT6H",
-       "rank": "中",
-       "when": "２日００時から０６時"
-      },
-      {
-       "at": "2026-11-02T06:00:00+09:00",
-       "dur": "PT6H",
-       "rank": "中",
-       "when": "２日０６時から１２時"
-      },
-      {
-       "at": "2026-11-02T12:00:00+09:00",
-       "dur": "PT6H",
-       "rank": "中",
-       "when": "２日１２時から１８時"
-      },
-      {
-       "at": "2026-11-02T18:00:00+09:00",
-       "dur": "PT6H",
-       "rank": "中",
-       "when": "２日１８時から２４時"
-      },
-      {
-       "at": "2026-11-03T00:00:00+09:00",
-       "dur": "PT12H",
-       "rank": "中",
-       "when": "３日００時から１２時"
-      },
-      {
-       "at": "2026-11-03T12:00:00+09:00",
-       "dur": "PT12H",
-       "rank": "中",
-       "when": "３日１２時から２４時"
-      }
-     ],
-     "jp": "波",
-     "unknown": false
-    }
-   ],
-   "name": "小笠原諸島",
-   "office": "気象庁",
-   "report": "2026-11-01T17:00:00+09:00",
-   "text": "小笠原諸島では、３日までの期間内に、波浪警報を発表する可能性がある。",
-   "worst": "中"
-  }
- },
- "generatedAt": "2026-11-01T14:14:39+00:00",
- "offices": 56,
+ "areas": {},
+ "generatedAt": "2026-11-01T19:11:17+00:00",
+ "offices": 3,
  "officesFailed": 0,
  "product": "早期注意情報（明後日まで）",
  "reportDatetime": "2026-11-01T20:00:00+09:00"
