@@ -3,34 +3,10 @@
    A FORECAST OF POSSIBILITY, not an observation and not a warning:
    JMA is saying it may issue a 警報 in the stated window. */
 const JMA_EARLY = {
- "areas": {
-  "130040": {
-   "kinds": [
-    {
-     "el": "wave",
-     "en": "High waves",
-     "hits": [
-      {
-       "at": "2026-11-11T18:00:00+09:00",
-       "dur": "PT6H",
-       "rank": "中",
-       "when": "１１日１８時から２４時"
-      }
-     ],
-     "jp": "波",
-     "unknown": false
-    }
-   ],
-   "name": "小笠原諸島",
-   "office": "気象庁",
-   "report": "2026-11-11T17:00:00+09:00",
-   "text": "小笠原諸島では、１１日までの期間内に、波浪警報を発表する可能性がある。",
-   "worst": "中"
-  }
- },
- "generatedAt": "2026-11-11T10:48:45+00:00",
- "offices": 56,
+ "areas": {},
+ "generatedAt": "2026-11-11T18:39:10+00:00",
+ "offices": 1,
  "officesFailed": 0,
  "product": "早期注意情報（明後日まで）",
- "reportDatetime": "2026-11-11T17:00:00+09:00"
+ "reportDatetime": "2026-11-11T21:00:00+09:00"
 };
