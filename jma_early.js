@@ -3,10 +3,57 @@
    A FORECAST OF POSSIBILITY, not an observation and not a warning:
    JMA is saying it may issue a 警報 in the stated window. */
 const JMA_EARLY = {
- "areas": {},
- "generatedAt": "2026-11-12T00:59:34+00:00",
+ "areas": {
+  "474010": {
+   "kinds": [
+    {
+     "el": "rain",
+     "en": "Heavy rain",
+     "hits": [
+      {
+       "at": "2026-11-14T12:00:00+09:00",
+       "dur": "PT12H",
+       "rank": "中",
+       "when": "１４日１２時から２４時"
+      }
+     ],
+     "jp": "大雨",
+     "unknown": false
+    }
+   ],
+   "name": "石垣島地方",
+   "office": "石垣島地方気象台",
+   "report": "2026-11-12T17:00:00+09:00",
+   "text": "石垣島地方では、１４日までの期間内に、大雨警報を発表する可能性がある。",
+   "worst": "中"
+  },
+  "474020": {
+   "kinds": [
+    {
+     "el": "rain",
+     "en": "Heavy rain",
+     "hits": [
+      {
+       "at": "2026-11-14T12:00:00+09:00",
+       "dur": "PT12H",
+       "rank": "中",
+       "when": "１４日１２時から２４時"
+      }
+     ],
+     "jp": "大雨",
+     "unknown": false
+    }
+   ],
+   "name": "与那国島地方",
+   "office": "石垣島地方気象台",
+   "report": "2026-11-12T17:00:00+09:00",
+   "text": "与那国島地方では、１４日までの期間内に、大雨警報を発表する可能性がある。",
+   "worst": "中"
+  }
+ },
+ "generatedAt": "2026-11-12T08:16:35+00:00",
  "offices": 56,
  "officesFailed": 0,
  "product": "早期注意情報（明後日まで）",
- "reportDatetime": "2026-11-12T05:00:00+09:00"
+ "reportDatetime": "2026-11-12T17:00:00+09:00"
 };
