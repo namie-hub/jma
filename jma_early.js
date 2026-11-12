@@ -4,9 +4,9 @@
    JMA is saying it may issue a 警報 in the stated window. */
 const JMA_EARLY = {
  "areas": {},
- "generatedAt": "2026-11-11T18:39:10+00:00",
- "offices": 1,
+ "generatedAt": "2026-11-12T00:59:34+00:00",
+ "offices": 56,
  "officesFailed": 0,
  "product": "早期注意情報（明後日まで）",
- "reportDatetime": "2026-11-11T21:00:00+09:00"
+ "reportDatetime": "2026-11-12T05:00:00+09:00"
 };
