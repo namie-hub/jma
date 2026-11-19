@@ -18,7 +18,8 @@ jobs:
       - uses: actions/checkout@v5
       # Pin the runtime: ubuntu-latest is moving to Ubuntu 26, and the
       # runner's bundled Node version is not something to depend on.
-      - uses: actions/setup-node@v4
+      # v5 runs on the Node 24 action runtime (v4 targets the deprecated Node 20).
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
       - name: Validate all JMA and disaster feeds
