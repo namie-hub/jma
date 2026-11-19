@@ -294,6 +294,18 @@ function ghEsc(s, prop){
                         .filter(t => !isNaN(t)).sort((a, c) => c - a)[0];
         if (!newest) return "no parseable reportDatetime in any bulletin";
         warnAges.set(o, (Date.now() - newest.getTime()) / 3600000);
+        /* All-clear offices are exempt from the age bound (the Nara lesson,
+           2026-11-19): 290000 went 8 days without a bulletin because every
+           hazard type in every bulletin was 解除 or 発表警報・注意報はなし —
+           nothing in effect means nothing to reissue, at ANY age. The bound
+           now applies only while something is actually in effect (発表/継続
+           etc.), where a week without an update genuinely is anomalous. A
+           frozen all-clear office is still covered by the nationwide
+           retirement detector below. */
+        const QUIET = new Set(["解除", "発表警報・注意報はなし"]);
+        const statuses = d.flatMap(x => ((x.warning && x.warning.class10Items) || [])
+                          .flatMap(i => (i.kinds || []).map(k => k.status)));
+        if (statuses.length && statuses.every(s => QUIET.has(s))) return null;
         /* Per-office bound is deliberately enormous. Measured across all 56
            offices on a quiet August afternoon: median 2.4 h, p90 20 h, and a
            genuine maximum of 55 h — Sapporo, Aichi, Miyazaki, Okinawa and
@@ -302,7 +314,8 @@ function ghEsc(s, prop){
            nothing to reissue. Any threshold tight enough to catch a dead
            office is therefore tight enough to cry wolf about a calm one, and
            a checker that cries wolf is a checker that gets filtered to a
-           folder nobody reads. 7 days catches a single office genuinely
+           folder nobody reads. 7 days (and only while something is in
+           effect — see the all-clear exemption above) catches a single office genuinely
            falling off the map and nothing else; the simultaneous case — the
            one that actually happened — is caught below instead.            */
         return stale(newest.toISOString(), 24 * 7, "reportDatetime");
