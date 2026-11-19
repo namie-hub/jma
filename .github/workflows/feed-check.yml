@@ -5,10 +5,26 @@ on:
     - cron: "35 21 * * *"
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   check:
     runs-on: ubuntu-latest
+    # Worst case is ~2 min of retries + a 2 min recheck pause; anything far
+    # beyond that is a hang, not a slow feed.
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v5
+      # Pin the runtime: ubuntu-latest is moving to Ubuntu 26, and the
+      # runner's bundled Node version is not something to depend on.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
       - name: Validate all JMA and disaster feeds
+        # Failures are re-checked once after RECHECK_DELAY_S; only feeds that
+        # fail both passes fail the run. Each broken feed is named in an
+        # ::error annotation and in the job summary.
+        env:
+          RECHECK_DELAY_S: "120"
         run: node scripts/check_feeds.js
