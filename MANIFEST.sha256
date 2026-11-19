@@ -1,5 +1,5 @@
 # Japan Weather/Disaster Atlas — hand-authored source integrity record
-# Generated: 2026-11-19 03:02 UTC by scripts/make_manifest.sh
+# Generated: 2026-11-19 03:05 UTC by scripts/make_manifest.sh
 #
 # EXCLUDED by design (Actions-owned, rewritten by the ingest workflows):
 #   hko_tctrack.js  jma_early.js  jma_nankai.js  jma_phenology.js
@@ -12,7 +12,7 @@
 # sha256  path
 ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356  .github/ingest-health.json
 5ef3a5d096a4a13b4a7b8757c59a9cb18720e89bfa360f71195383a1ee4d0a02  .github/workflows/atlas-ingest.yml
-98df0fd19dd0ff0afc8f383bac16a9c25613b6de0718ee97a5bcba2221f07c8f  .github/workflows/feed-check.yml
+efb79424c3ede3d4dca31c320a429bd3863a0082ebda58a219a07da045c76299  .github/workflows/feed-check.yml
 b3ecd1d322a450a940d6f1025a5ebd23e8eb0e4c7cbb1e1e4d62255303b63863  .github/workflows/update-phenology.yml
 96279758fb2f0fc74ca3f001ffb211baf02ff0d7e53238f158547a4d34075ee6  .github/workflows/update-typhoon-history.yml
 fe097f4e1077bef4ea0210f8aa806b7f3b4f21e65c6ad4ab8cd1f58b7cf2c12d  .github/workflows/verify-manifest.yml
